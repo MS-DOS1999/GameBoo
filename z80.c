@@ -10,11 +10,11 @@ void initZ80(){
 
 
     z80.m_ProgramCounter = 0x100 ;
-    z80.m_RegisterAF.Reg = 0x01B0 ;
-    z80.m_RegisterBC.Reg = 0x0013 ;
-    z80.m_RegisterDE.Reg = 0x00D8 ;
-    z80.m_RegisterHL.Reg = 0x014D ;
-    z80.m_StackPointer.Reg = 0xFFFE ;
+    z80.m_RegisterAF.reg = 0x01B0 ;
+    z80.m_RegisterBC.reg = 0x0013 ;
+    z80.m_RegisterDE.reg = 0x00D8 ;
+    z80.m_RegisterHL.reg = 0x014D ;
+    z80.m_StackPointer.reg = 0xFFFE ;
     z80.m_Rom[0xFF05] = 0x00 ;
     z80.m_Rom[0xFF06] = 0x00 ;
     z80.m_Rom[0xFF07] = 0x00 ;
@@ -47,8 +47,6 @@ void initZ80(){
     z80.m_Rom[0xFF4B] = 0x00 ;
     z80.m_Rom[0xFFFF] = 0x00 ;
 
-    DetectMapper();
-
     z80.m_CurrentROMBank = 1;
     z80.m_CurrentRAMBank = 0;
     z80.m_TimerCounter = 1024;
@@ -80,22 +78,28 @@ void DetectMapper(){
 
 //MEMORY READ/WRITE//
 
-void PushWordOntoStack(word word)
+void PushWordOntoStack(word wOrd){
 
-{
+    byte hi = wOrd >> 8 ;
 
-    byte hi = word >> 8 ;
+    byte lo = wOrd & 0xFF;
 
-    byte lo = word & 0xFF;
+    z80.m_StackPointer.reg--;
 
-    z80.m_StackPointer.Reg--;
+    WriteMemory(z80.m_StackPointer.reg, hi);
 
-    WriteMemory(z80.m_StackPointer.Reg, hi);
+    z80.m_StackPointer.reg--;
 
-    z80.m_StackPointer.Reg--;
+    WriteMemory(z80.m_StackPointer.reg, lo);
 
-    WriteMemory(z80.m_StackPointer.Reg, lo);
+}
 
+word PopWordOffStack(){
+    word wOrd = ReadMemory(z80.m_StackPointer.reg+1) << 8 ;
+    wOrd |= ReadMemory(z80.m_StackPointer.reg) ;
+    z80.m_StackPointer.reg+=2 ;
+
+    return wOrd ;
 }
 
 void WriteMemory(word address, byte data){
@@ -123,7 +127,7 @@ void WriteMemory(word address, byte data){
         z80.m_Rom[0xFF44] = 0;
     }
     else if(0xFF46 == address){
-        DoDMATransfert(data);
+        DoDMATransfer(data);
     }
 }
 
@@ -152,7 +156,7 @@ void HandleBanking(word address, byte data){
 
     if (address < 0x2000){
         if (z80.m_MBC1 || z80.m_MBC2){
-            DoRamBankEnable(address,data);
+            DoRAMBankEnable(address,data);
         }
     }
     else if((address>=0x2000) && (address<0x4000)){
@@ -163,7 +167,7 @@ void HandleBanking(word address, byte data){
     else if((address>=0x4000) && (address<0x6000)){
         if(z80.m_MBC1){
             if(z80.m_RomBanking){
-                DoChangeHiRomBank(data);
+                DoChangeHiROMBank(data);
             }
             else{
                 DoRAMBankChange(data);
@@ -265,7 +269,7 @@ void UpdateTimers(int cycles){
     }
 }
 
-bool IsClockEnable(){
+bool IsClockEnabled(){
     if(TestBit8(ReadMemory(TMC),2)){
         return true;
     }
@@ -600,34 +604,6 @@ void RenderTiles(byte control){
 
         COLOR col = GetColor(colorNum, 0xFF47);
 
-        int red = 0;
-
-        int green = 0;
-
-        int blue = 0;
-
-        switch (col){
-            case WHITE:
-                red=255;
-                green=255;
-                blue=255;
-                break;
-            case LIGHT_GREY:
-                red=0xCC;
-                green=0xCC;
-                blue=0xCC;
-                break;
-            case DARK_GREY:
-                red=0xCC;
-                green=0xCC;
-                blue=0xCC;
-                break;
-            case BLACK:
-                red = 0;
-                green = 0;
-                blue = 0;
-                break;
-        }
 
         int finaly = ReadMemory(0xFF44);
         //test overflow//
@@ -636,9 +612,21 @@ void RenderTiles(byte control){
             continue ;
         }
 
-        z80.m_ScreenData[pixel][finaly][0]=red;
-        z80.m_ScreenData[pixel][finaly][1]=green;
-        z80.m_ScreenData[pixel][finaly][2]=blue;
+        switch (col){
+            case WHITE:
+                z80.m_ScreenData[pixel][finaly].color = WHITE;
+                break;
+            case LIGHT_GREY:
+                z80.m_ScreenData[pixel][finaly].color = LIGHT_GREY;
+                break;
+            case DARK_GREY:
+                z80.m_ScreenData[pixel][finaly].color = DARK_GREY;
+                break;
+            case BLACK:
+                z80.m_ScreenData[pixel][finaly].color = BLACK;
+                break;
+        }
+
 
     }
 
@@ -767,34 +755,6 @@ void RenderSprites(byte control){
                     continue;
                 }
 
-                int red = 0;
-                int green = 0;
-                int blue = 0;
-
-                switch(col){
-                    case WHITE:
-                        red = 255;
-                        green = 255;
-                        blue = 255;
-                        break;
-                    case LIGHT_GREY:
-                        red = 0xCC;
-                        green = 0xCC;
-                        blue = 0xCC;
-                        break;
-                    case DARK_GREY:
-                        red = 0x77;
-                        green = 0x77;
-                        blue = 0x77;
-                        break;
-                    case BLACK:
-                        red = 0;
-                        green = 0;
-                        blue = 0;
-                        break;
-
-                }
-
                 int xPix = 0 - tilePixel;
 
                 xPix += 7;
@@ -805,10 +765,22 @@ void RenderSprites(byte control){
                     continue ;
                 }
 
-                z80.m_ScreenData[pixel][scanline][0] = red;
-                z80.m_ScreenData[pixel][scanline][1] = green;
-                z80.m_ScreenData[pixel][scanline][2] = blue;
 
+                switch(col){
+                    case WHITE:
+                        z80.m_ScreenData[pixel][scanline].color = WHITE;
+                        break;
+                    case LIGHT_GREY:
+                        z80.m_ScreenData[pixel][scanline].color = LIGHT_GREY;
+                        break;
+                    case DARK_GREY:
+                        z80.m_ScreenData[pixel][scanline].color = DARK_GREY;
+                        break;
+                    case BLACK:
+                        z80.m_ScreenData[pixel][scanline].color = BLACK;
+                        break;
+
+                }
             }
         }
     }
@@ -816,11 +788,925 @@ void RenderSprites(byte control){
 
 //GRAPHICS//
 
+//OPCODE//
+
+void ExecuteNextOpcode(){
+    byte opcode = ReadMemory(z80.m_ProgramCounter);
+    z80.m_ProgramCounter++;
+    ExecuteOpcode(opcode);
+}
 
 
+void ExecuteOpcode(byte opcode){
+	/*
+    switch(opcode){
+        case 0x00:
+            cyclesTime = 4;
+            loopCounter += 4;break;
+        case 0x01:
+            cyclesTime = 12;
+            CPU_16BIT_LOAD(z80.m_RegisterBC.reg);break;
+        case 0x02:
+            cyclesTime = 8;
+            WriteMemory(z80.m_RegisterBC.reg, z80.m_RegisterAF.hi);loopCounter+=8;break;
+        case 0x03:
+            cyclesTime = 8;
+            CPU_16BIT_INC(z80.m_RegisterBC.reg, 8);break;
+        case 0x04:
+            cyclesTime = 4;
+            CPU_8BIT_INC(z80.m_RegisterBC.hi, 4);break;
+        case 0x05:
+            cyclesTime = 4;
+            CPU_8BIT_DEC(z80.m_RegisterBC.hi, 4);break;
+        case 0x06:
+            cyclesTime = 8;
+            CPU_8BIT_LOAD(z80.m_RegisterBC.hi);break;
+        case 0x07:
+            cyclesTime = 4;
+            CPU_RLC(z80.m_RegisterAF.hi);break;
+        case 0x08:
+            cyclesTime = 20;
+            word nn = ReadWord();
+            z80.m_programCounter+=2;
+            WriteMemory(nn, z80.m_Stackpointer.lo);
+            n++;
+            WriteMemory(nn, z80.m_StackPointer.hi);
+            loopCounter += 20;
+            break;
+        case 0x09:
+            cyclesTime = 8;
+            CPU_16BIT_ADD(z80.m_RegisterHL.reg, z80.m_RegisterBC.reg, 8);break;
+        case 0x0A:
+            cyclesTime = 8;
+            CPU_REG_LOAD_ROM(z80.m_RegisterAF.hi, z80.m_RegisterBC.reg);break;
+        case 0x0B:
+            cyclesTime = 8;
+            CPU_16BIT_DEC(z80.m_RegisterBC.reg, 8);break;
+        case 0x0C:
+            cyclesTime = 4;
+            CPU_8BIT_INC(z80.m_RegisterBC.lo);break;
+        case 0x0D:
+            cyclesTime = 4;
+            CPU_8BIT_DEC(z80.m_RegisterBC.lo);break;
+        default:
+            break;
+    }*/
+}
+
+//OPCODE//
+
+//ASM2C//
+/*
+word ReadWord(){
+    word res = ReadMemory(z80.m_ProgramCounter+1);
+    res = res << 8;
+    res |= ReadMemory(z80.m_ProgramCounter);
+    return res;
+}
+
+void CPU_8BIT_LOAD(byte* reg){
+    loopCounter += 8;
+    byte n = ReadMemory(z80.m_ProgramCounter);
+    z80.m_ProgramCounter++;
+    *reg = n;
+}
+
+void CPU_16BIT_LOAD(word* reg){
+    loopCounter += 12;
+    word n = ReadWord();
+    z80.m_ProgramCounter+=2;
+    *reg = n;
+}
+
+void CPU_REG_LOAD(byte* reg, byte load, int cycles){
+    loopCounter+=cycles;
+    *reg = load;
+}
+
+void CPU_REG_LOAD_ROM(byte* reg, word address){
+    loopCounter+=8;
+	byte temp = ReadMemory(address);
+    *reg = temp;
+}
+
+void CPU_16BIT_DEC(word* wOrd, int cycles){
+    loopCounter+=cycles;
+    wOrd--;
+}
+
+void CPU_16BIT_INC(word* wOrd, int cycles){
+    loopCounter+=cycles;
+    wOrd++;
+}
+
+void CPU_8BIT_ADD(byte* reg, byte toAdd, int cycles, bool useImmediate, bool addCarry){
+    loopCounter+=cycles;
+    byte before = *reg;
+    byte adding = 0;
+
+    if(useImmediate){
+        byte n = ReadMemory(z80.m_ProgramCounter);
+        z80.m_ProgramCounter++;
+        adding = n;
+    }
+    else{
+        adding = toAdd;
+    }
+
+    if(addCarry){
+        if(TestBit8(z80.m_RegisterAF.lo, FLAG_C)){
+            adding++;
+        }
+    }
+
+    *reg+=adding;
+
+    z80.m_RegisterAF.lo = 0;
+
+    if(*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z);
+    }
+
+    word htest = (before & 0xF);
+    htest += (adding & 0xF);
+
+    if(htest > 0xF){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_H);
+    }
+    if((before + adding) > 0xFF){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C);
+    }
+}
+
+void CPU_8BIT_SUB(byte* reg, byte subtracting, int cycles, bool useImmediate, bool subCarry){
+    loopCounter+=cycles;
+    byte before = *reg;
+    byte toSubtract = 0;
+
+    if(useImmediate){
+        byte n = ReadMemory(z80.m_ProgramCounter);
+        z80.m_ProgramCounter++;
+        toSubtract = n;
+    }
+    else{
+        toSubtract = subtracting;
+    }
+
+    if(subCarry){
+        if(TestBit8(z80.m_RegisterAF.lo, FLAG_C)){
+            toSubtract++;
+        }
+    }
+
+    *reg -= toSubtract;
+
+    z80.m_RegisterAF.lo = 0;
+
+    if(*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z);
+    }
+
+    z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_N);
+
+    if(before < toSubtract){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C);
+    }
+    signed_word htest = (before & 0xF);
+    htest -= (toSubtract & 0xF);
+
+    if(htest < 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_H);
+    }
+}
+
+void CPU_8BIT_AND(byte* reg, byte toAnd, int cycles, bool useImmediate){
+    loopCounter+=cycles;
+    byte myand = 0;
+
+    if(useImmediate){
+        byte n = ReadMemory(z80.m_ProgramCounter);
+        z80.m_ProgramCounter++;
+        myand = n;
+    }
+    else{
+        myand = toAnd;
+    }
+
+    *reg &= myand;
+
+    z80.m_RegisterAF.lo = 0;
+
+    if(*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z);
+    }
+
+    z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_H);
+}
+
+void CPU_8BIT_OR(byte* reg, byte toOr, int cycles, bool useImmediate){
+    loopCounter+=cycles;
+    byte myor = 0;
+
+    if(useImmediate){
+        byte n = ReadMemory(z80.m_ProgramCounter);
+        z80.m_ProgramCounter++;
+        myor = n;
+    }
+    else{
+        myor = toOr;
+    }
+
+    *reg |= myor;
+
+    z80.m_RegisterAF.lo = 0;
+
+    if(*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z);
+    }
+}
+
+void CPU_8bit_XOR(byte* reg, byte toXOr, int cycles, bool useImmediate){
+    loopCounter+=cycles;
+    byte myxor = 0;
+
+    if(useImmediate){
+        byte n = ReadMemory(z80.m_ProgramCounter);
+        z80.m_ProgramCounter++;
+        myxor = n;
+    }
+    else{
+        myxor = toXOr;
+    }
+
+    *reg ^= myxor;
+
+    z80.m_RegisterAF.lo = 0;
+
+    if(*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z);
+    }
+}
+
+void CPU_8BIT_COMPARE(byte* reg, byte subtracting, int cycles, bool useImmediate){
+    loopCounter+=cycles;
+    byte before = *reg;
+    byte toSubtract = 0;
+
+    if(useImmediate){
+        byte n = ReadMemory(z80.m_ProgramCounter);
+        z80.m_ProgramCounter++;
+        toSubtract = n;
+    }
+    else{
+        toSubtract = subtracting;
+    }
+
+    *reg -= toSubtract;
+
+    z80.m_RegisterAF.lo = 0;
+
+    if(*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z);
+    }
+
+    z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_N);
+
+    if(before < toSubtract){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C);
+    }
+
+    signed_word htest = before & 0xF;
+    htest -= (toSubtract & 0xF);
+
+    if(htest < 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_H);
+    }
+}
+
+void CPU_8BIT_INC(byte* reg, int cycles){
 
 
+    loopCounter+= cycles ;
+
+    byte before = *reg ;
+
+    reg++ ;
+
+    if (*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    else{
+        z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+
+    z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_N) ;
+
+    if ((before & 0xF) == 0xF){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_H) ;
+    }
+    else{
+        z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_H) ;
+    }
+}
+
+void CPU_8BIT_MEMORY_INC(word address, int cycles){
 
 
+    loopCounter+= cycles ;
+
+    byte before = ReadMemory( address ) ;
+    WriteMemory(address, (before+1)) ;
+    byte now =  before+1 ;
+
+    if (now == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    else{
+        z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+
+    z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_N) ;
+
+    if ((before & 0xF) == 0xF){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_H) ;
+    }
+    else{
+        z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_H) ;
+    }
+}
+
+void CPU_8BIT_DEC(byte* reg, int cycles){
+
+    loopCounter+=cycles ;
+    byte before = *reg ;
+
+    reg-- ;
+
+    if (*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    else{
+        z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_N) ;
+
+    if ((before & 0x0F) == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_H) ;
+    }
+    else{
+        z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_H) ;
+    }
+}
+
+void CPU_8BIT_MEMORY_DEC(word address, int cycles){
+
+    loopCounter+=cycles ;
+    byte before = ReadMemory(address) ;
+    WriteMemory(address, (before-1)) ;
+    byte now = before-1 ;
+
+    if (now == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    else{
+        z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_N) ;
+
+    if ((before & 0x0F) == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_H) ;
+    }
+    else{
+        z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_H) ;
+    }
+}
+
+void CPU_16BIT_ADD(word* reg, word toAdd, int cycles){
+    loopCounter += cycles;
+    word before = *reg;
+
+    *reg += toAdd ;
+
+    z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_N) ;
+
+    if ((before + toAdd) > 0xFFFF){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+    }
+    else{
+        z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_C) ;
+    }
+
+    if (( (before & 0xFF00) & 0xF) + ((toAdd >> 8) & 0xF)){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_H) ;
+    }
+    else{
+        z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_H) ;
+    }
+}
+
+void CPU_JUMP(bool useCondition, int flag, bool condition){
+    loopCounter += 12 ;
+
+    word nn = ReadWord() ;
+    z80.m_ProgramCounter += 2 ;
+
+    if (!useCondition){
+        z80.m_ProgramCounter = nn ;
+        return ;
+    }
+
+    if (TestBit8(z80.m_RegisterAF.lo, flag) == condition){
+        z80.m_ProgramCounter = nn ;
+    }
+
+}
+
+void CPU_JUMP_IMMEDIATE(bool useCondition, int flag, bool condition){
+    loopCounter += 8 ;
+
+    signed_byte n = (signed_byte)ReadMemory(z80.m_ProgramCounter) ;
+
+    if (!useCondition){
+        z80.m_ProgramCounter += n;
+    }
+    else if (TestBit8(z80.m_RegisterAF.lo, flag) == condition){
+        z80.m_ProgramCounter += n ;
+    }
+
+    z80.m_ProgramCounter++ ;
+}
+
+void CPU_CALL(bool useCondition, int flag, bool condition){
+    loopCounter+=12 ;
+    word nn = ReadWord() ;
+    z80.m_ProgramCounter += 2;
+
+    if (!useCondition){
+        PushWordOntoStack(z80.m_ProgramCounter) ;
+        z80.m_ProgramCounter = nn ;
+        return ;
+    }
+
+    if (TestBit8(z80.m_RegisterAF.lo, flag)==condition){
+        PushWordOntoStack(z80.m_ProgramCounter) ;
+        z80.m_ProgramCounter = nn ;
+    }
+}
+
+void CPU_RETURN(bool useCondition, int flag, bool condition){
+    loopCounter += 8 ;
+    if (!useCondition){
+        z80.m_ProgramCounter = PopWordOffStack( ) ;
+        return ;
+    }
+
+    if (TestBit8(z80.m_RegisterAF.lo, flag) == condition){
+        z80.m_ProgramCounter = PopWordOffStack() ;
+    }
+}
+
+void CPU_SWAP_NIBBLES(byte* reg)
+{
+    loopCounter += 8 ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    *reg = (((*reg & 0xF0) >> 4) | ((*reg & 0x0F) << 4));
+
+    if (*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+}
+
+void CPU_SWAP_NIB_MEM(word address){
+    loopCounter+= 16 ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    byte mem = ReadMemory(address) ;
+    mem = (((mem & 0xF0) >> 4) | ((mem & 0x0F) << 4));
+
+    WriteMemory(address,mem) ;
+
+    if (mem == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+
+}
+
+void CPU_RESTARTS(byte n){
+    PushWordOntoStack(z80.m_ProgramCounter) ;
+    loopCounter += 32 ;
+    z80.m_ProgramCounter = n ;
+}
+
+void CPU_SHIFT_LEFT_CARRY(byte* reg){
+
+    loopCounter += 8 ;
+    z80.m_RegisterAF.lo = 0 ;
+    if (TestBit8(*reg,7)){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C);
+    }
+
+    *reg = *reg << 1 ;
+    if (*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+}
+
+void CPU_SHIFT_LEFT_CARRY_MEMORY(word address){
+
+    loopCounter += 16 ;
+    byte before = ReadMemory(address) ;
+
+    z80.m_RegisterAF.lo = 0 ;
+    if (TestBit8(before,7)){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+    }
+    before = before << 1 ;
+    if (before == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    WriteMemory(address, before) ;
+}
+
+void CPU_RESET_BIT(byte* reg, int bit){
+
+    *reg = BitReset8(*reg, bit) ;
+    loopCounter += 8 ;
+}
+
+void CPU_TEST_BIT(byte reg, int bit, int cycles){
+    if (TestBit8(reg, bit)){
+        z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    else{
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_N) ;
+    z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_H) ;
+
+    loopCounter += cycles ;
+}
+
+void CPU_SET_BIT_MEMORY(word address, int bit){
+
+    byte mem = ReadMemory(address) ;
+    mem = BitSet8(mem, bit) ;
+    WriteMemory(address, mem) ;
+    loopCounter += 16 ;
+}
+
+void CPU_DAA(){
+    loopCounter += 4 ;
+
+    if(TestBit8(z80.m_RegisterAF.lo, FLAG_N)){
+        if((z80.m_RegisterAF.hi &0x0F ) >0x09 || z80.m_RegisterAF.lo &0x20 ){
+            z80.m_RegisterAF.hi -=0x06;
+            if((z80.m_RegisterAF.hi&0xF0)==0xF0){
+                z80.m_RegisterAF.lo |= 0x10;
+            }
+            else{
+                z80.m_RegisterAF.lo &= ~0x10;
+            }
+        }
+
+        if((z80.m_RegisterAF.hi&0xF0)>0x90 || z80.m_RegisterAF.lo&0x10){
+            z80.m_RegisterAF.hi-=0x60;
+        }
+    }
+    else{
+        if((z80.m_RegisterAF.hi&0x0F)>9 || z80.m_RegisterAF.lo&0x20){
+            z80.m_RegisterAF.hi+=0x06;
+            if((z80.m_RegisterAF.hi&0xF0)==0){
+                z80.m_RegisterAF.lo|=0x10;
+            }
+            else{
+                z80.m_RegisterAF.lo&=~0x10;
+            }
+        }
+
+        if((z80.m_RegisterAF.hi&0xF0)>0x90 || z80.m_RegisterAF.lo&0x10){
+            z80.m_RegisterAF.hi+=0x60;
+        }
+    }
+
+    if(z80.m_RegisterAF.hi==0){
+        z80.m_RegisterAF.lo|=0x80;
+    }
+    else{
+        z80.m_RegisterAF.lo&=~0x80;
+    }
+}
+
+void CPU_RR(byte* reg){
+
+    loopCounter += 8 ;
+
+    bool isCarrySet = TestBit8(z80.m_RegisterAF.lo, FLAG_C) ;
+    bool isLSBSet = TestBit8(*reg, 0) ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    *reg >>= 1 ;
+
+    if (isLSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+    }
+    if (isCarrySet){
+        *reg = BitSet8(*reg, 7) ;
+    }
+    if (reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+}
+
+void CPU_RR_MEMORY(word address){
+
+    loopCounter += 16 ;
+
+    byte reg = ReadMemory(address) ;
+
+    bool isCarrySet = TestBit8(z80.m_RegisterAF.lo, FLAG_C) ;
+    bool isLSBSet = TestBit8(reg, 0) ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    reg >>= 1 ;
+
+    if (isLSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+    }
+    if (isCarrySet){
+        reg = BitSet8(reg, 7) ;
+    }
+    if (reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    WriteMemory(address, reg) ;
+}
+
+void CPU_RLC(byte* reg){
+
+    loopCounter += 8 ;
+
+    bool isMSBSet = TestBit8(*reg, 7) ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    *reg <<= 1;
+
+    if (isMSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+        *reg = BitSet8(*reg,0) ;
+    }
+
+    if (*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+}
+
+void CPU_RLC_MEMORY(word address){
+
+
+    loopCounter += 16 ;
+
+    byte reg = ReadMemory(address) ;
+
+    bool isMSBSet = TestBit8(reg, 7) ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    reg <<= 1;
+
+    if (isMSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+        reg = BitSet8(reg,0) ;
+    }
+
+    if (reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    WriteMemory(address, reg);
+
+}
+
+void CPU_RRC(byte* reg){
+
+    loopCounter += 8 ;
+
+    bool isLSBSet = TestBit8(*reg, 0) ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    *reg >>= 1;
+
+    if (isLSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+        *reg = BitSet8(*reg,7) ;
+    }
+
+    if (*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+}
+
+void CPU_RRC_MEMORY(word address)
+{
+
+    loopCounter += 16 ;
+
+    byte reg = ReadMemory(address) ;
+
+    bool isLSBSet = TestBit8(reg, 0) ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    reg >>= 1;
+
+    if (isLSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+        reg = BitSet8(reg,7) ;
+    }
+
+    if (reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    WriteMemory(address, reg) ;
+}
+
+void CPU_SLA(byte* reg){
+
+    loopCounter += 8 ;
+
+    bool isMSBSet = TestBit8(*reg, 7);
+
+    *reg <<= 1;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    if (isMSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+    }
+
+    if (*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+}
+
+void CPU_SLA_MEMORY(word address){
+
+    loopCounter += 16 ;
+
+    byte reg = ReadMemory(address) ;
+
+    bool isMSBSet = TestBit8(reg, 7);
+
+    reg <<= 1;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    if (isMSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+    }
+    if (reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    WriteMemory(address, reg) ;
+}
+
+void CPU_SRA(byte* reg){
+
+    loopCounter += 8 ;
+
+    bool isLSBSet = TestBit8(*reg,0) ;
+    bool isMSBSet = TestBit8(*reg,7) ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    *reg >>= 1;
+
+    if (isMSBSet){
+        *reg = BitSet8(*reg,7) ;
+    }
+    if (isLSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+    }
+
+    if (*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+}
+
+void CPU_SRA_MEMORY(word address){
+
+    loopCounter += 16 ;
+
+    byte reg = ReadMemory(address) ;
+
+    bool isLSBSet = TestBit8(reg,0) ;
+    bool isMSBSet = TestBit8(reg,7) ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    reg >>= 1;
+
+    if (isMSBSet){
+        reg = BitSet8(reg,7) ;
+    }
+    if (isLSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+    }
+    if (reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    WriteMemory(address, reg) ;
+}
+
+void CPU_SRL(byte* reg){
+
+    loopCounter += 8 ;
+
+    bool isLSBSet = TestBit8(*reg,0) ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    *reg >>= 1;
+
+    if (isLSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+    }
+    if (*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+}
+
+void CPU_SRL_MEMORY(word address){
+
+    loopCounter += 8 ;
+
+    byte reg = ReadMemory(address) ;
+
+    bool isLSBSet = TestBit8(reg,0) ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    reg >>= 1;
+
+    if (isLSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+    }
+    if (reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    WriteMemory(address, reg) ;
+}
+
+void CPU_RL(byte* reg){
+
+    loopCounter += 8 ;
+
+    bool isCarrySet = TestBit8(z80.m_RegisterAF.lo, FLAG_C) ;
+    bool isMSBSet = TestBit8(*reg, 7) ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    *reg <<= 1 ;
+
+    if (isMSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+    }
+    if (isCarrySet){
+        *reg = BitSet8(*reg, 0) ;
+    }
+    if (*reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+}
+
+void CPU_RL_MEMORY(word address){
+
+    loopCounter += 16 ;
+    byte reg = ReadMemory(address) ;
+
+    bool isCarrySet = TestBit8(z80.m_RegisterAF.lo, FLAG_C) ;
+    bool isMSBSet = TestBit8(reg, 7) ;
+
+    z80.m_RegisterAF.lo = 0 ;
+
+    reg <<= 1 ;
+
+    if (isMSBSet){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+    }
+    if (isCarrySet){
+        reg = BitSet8(reg, 0) ;
+    }
+    if (reg == 0){
+        z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
+    }
+    WriteMemory(address, reg) ;
+}*/
+//ASM2C//
 
 

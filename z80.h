@@ -22,7 +22,7 @@ typedef signed short signed_word;
 
 
 typedef union{
-    word Reg;
+    word reg;
     struct{
         byte lo;
         byte hi;
@@ -30,10 +30,15 @@ typedef union{
 }Register;
 
 typedef struct{
+    SDL_Rect position;
+    Uint8 color;
+}PIXEL;
+
+typedef struct{
 
   byte m_CartridgeMemory[0x200000];
 
-  byte m_ScreenData[160][144][3];
+  PIXEL m_ScreenData[160][144];
 
   byte m_Rom[0x10000];
   byte m_RAMBanks[0x8000];
@@ -76,9 +81,9 @@ void DetectMapper();
 void WriteMemory(word, byte);
 byte ReadMemory(word);
 void HandleBanking(word, byte);
-void DoRamBankEnable(word, byte);
+void DoRAMBankEnable(word, byte);
 void DoChangeLoROMBank(byte);
-void DoChangeHiRomBank(byte);
+void DoChangeHiROMBank(byte);
 void DoRAMBankChange(byte);
 void DoChangeROMRAMMode(byte);
 void UpdateTimers(int);
@@ -92,12 +97,13 @@ void ServiceInterupt(int);
 void UpdateGraphics(int);
 void SetLCDStatus();
 bool IsLCDEnabled();
-void DoDMATransfert(byte);
+void DoDMATransfer(byte);
 void DrawScanLine();
 void RenderTiles(byte);
 COLOR GetColor(byte, word);
 void RenderSprites(byte);
-
+void ExecuteNextOpcode();
+void ExecuteOpcode(byte);
 
 #endif
 
