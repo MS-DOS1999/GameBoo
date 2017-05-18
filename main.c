@@ -3,8 +3,11 @@
 #include <stdbool.h>
 #include <string.h>
 #include <SDL/SDL.h>
-#include "z80.c"
 
+int loopCounter = 0;
+int cyclesTime = 0;
+
+#include "z80.c"
 
 void initSDL();
 void initScreen();
@@ -22,8 +25,7 @@ SDL_Surface *square[4];
 
 
 
-int main(){
-
+int main(int argc, char* argv[]){
 
     char filePath[200];
     printf("Indiquez le 'chemin absolu/absolute path' de votre rom :  ");
@@ -41,7 +43,7 @@ int main(){
 
     bool getReady = false;
 
-    getReady = LoadGame("/home/yoshi100/Bureau/dev/C/GameBoo/mem_timing.gb");
+    getReady = LoadGame("Tetris.gb");
 
     if(getReady){
         printf("RomLoaded: OK\n\n");
@@ -61,24 +63,31 @@ int main(){
         printf("ROM PCB: MBC2");
     }
 
-    //on redirige le stdout de la SDL pour l'afficher sur la console ;) //
+	
+	//on redirige le stdout de la SDL pour l'afficher sur la console ;) //
     freopen( "CON", "w", stdout );
     freopen( "CON", "w", stderr );
     //HELL YEAH//
-
+	
     if(getReady){
-        Update();
+		float fps = 59.73;
+		float interval = 1000;
+		interval /= fps;
+		while(1){
+			Update();
+			SDL_Delay(interval);
+		}
     }
 
     return EXIT_SUCCESS;
 }
 
 void Update(){
-
-    int loopCounter = 0;
-
+	
+	loopCounter = 0;
+	
     while(loopCounter < MAXLOOP){
-        int cyclesTime = 0;
+        cyclesTime = 0;
         ExecuteNextOpcode();
         UpdateTimers(cyclesTime);
         UpdateGraphics(cyclesTime);

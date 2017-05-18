@@ -20,7 +20,6 @@ typedef unsigned short word;
 typedef signed char signed_byte;
 typedef signed short signed_word;
 
-
 typedef union{
     word reg;
     struct{
@@ -104,6 +103,65 @@ COLOR GetColor(byte, word);
 void RenderSprites(byte);
 void ExecuteNextOpcode();
 void ExecuteOpcode(byte);
+
+//ASM2C//
+		word ReadWord();
+		void CPU_8BIT_LOAD(byte&);
+		void CPU_16BIT_LOAD(word&);
+		void CPU_REG_LOAD(byte&, byte, int);
+		void CPU_REG_LOAD_ROM(byte&, word);
+		void CPU_8BIT_ADD(byte&, byte, int, bool, bool);
+		void CPU_8BIT_SUB(byte&, byte, int, bool, bool);
+		void CPU_8BIT_AND(byte&, byte, int, bool);
+		void CPU_8BIT_OR(byte&, byte, int, bool);
+		void CPU_8BIT_XOR(byte&, byte, int, bool);
+		void CPU_8BIT_COMPARE(byte&, byte, int, bool);
+		void CPU_8BIT_INC(byte&, int);
+		void CPU_8BIT_DEC(byte&, int);
+		void CPU_8BIT_MEMORY_INC(word, int);
+		void CPU_8BIT_MEMORY_DEC(word, int);
+		void CPU_RESTARTS(byte);
+
+		void CPU_16BIT_DEC(word&, int);
+		void CPU_16BIT_INC(word&, int);
+		void CPU_16BIT_ADD(word&, word, int);
+
+		void CPU_JUMP(bool, int, bool);
+		void CPU_JUMP_IMMEDIATE(bool, int, bool) ;
+		void CPU_CALL(bool, int, bool);
+		void CPU_RETURN(bool, int, bool);
+
+		void CPU_SWAP_NIBBLES(byte&);
+		void CPU_SWAP_NIB_MEM(word);
+		void CPU_SHIFT_LEFT_CARRY(byte&);
+		void CPU_SHIFT_LEFT_CARRY_MEMORY(word);
+		void CPU_SHIFT_RIGHT_CARRY(byte&, bool);
+		void CPU_SHIFT_RIGHT_CARRY_MEMORY(word, bool);
+
+		void CPU_RESET_BIT(byte&, int);
+		void CPU_RESET_BIT_MEMORY(word, int);
+		void CPU_TEST_BIT(byte, int, int);
+		void CPU_SET_BIT(byte&, int);
+		void CPU_SET_BIT_MEMORY(word, int);
+
+		void CPU_DAA();
+
+		void CPU_RLC(byte&);
+		void CPU_RLC_MEMORY(word);
+		void CPU_RRC(byte&);
+		void CPU_RRC_MEMORY(word);
+		void CPU_RL(byte&);
+		void CPU_RL_MEMORY(word);
+		void CPU_RR(byte&);
+		void CPU_RR_MEMORY(word);
+
+		void CPU_SLA(byte&);
+		void CPU_SLA_MEMORY(word);
+		void CPU_SRA(byte&);
+		void CPU_SRA_MEMORY(word);
+		void CPU_SRL(byte&);
+		void CPU_SRL_MEMORY(word);
+
 
 #endif
 

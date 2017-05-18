@@ -798,65 +798,619 @@ void ExecuteNextOpcode(){
 
 
 void ExecuteOpcode(byte opcode){
-	/*
+	
     switch(opcode){
-        case 0x00:
+        case 0x00:{
             cyclesTime = 4;
             loopCounter += 4;break;
-        case 0x01:
+		}
+        case 0x01:{
             cyclesTime = 12;
             CPU_16BIT_LOAD(z80.m_RegisterBC.reg);break;
-        case 0x02:
+		}
+        case 0x02:{
             cyclesTime = 8;
             WriteMemory(z80.m_RegisterBC.reg, z80.m_RegisterAF.hi);loopCounter+=8;break;
-        case 0x03:
+		}
+        case 0x03:{
             cyclesTime = 8;
             CPU_16BIT_INC(z80.m_RegisterBC.reg, 8);break;
-        case 0x04:
+		}
+        case 0x04:{
             cyclesTime = 4;
             CPU_8BIT_INC(z80.m_RegisterBC.hi, 4);break;
-        case 0x05:
+		}
+        case 0x05:{
             cyclesTime = 4;
             CPU_8BIT_DEC(z80.m_RegisterBC.hi, 4);break;
-        case 0x06:
+		}
+        case 0x06:{
             cyclesTime = 8;
             CPU_8BIT_LOAD(z80.m_RegisterBC.hi);break;
-        case 0x07:
-            cyclesTime = 4;
+		}
+        case 0x07:{
+			cyclesTime = 4;
             CPU_RLC(z80.m_RegisterAF.hi);break;
-        case 0x08:
+		}
+        case 0x08:{
             cyclesTime = 20;
             word nn = ReadWord();
-            z80.m_programCounter+=2;
-            WriteMemory(nn, z80.m_Stackpointer.lo);
-            n++;
+            z80.m_ProgramCounter+=2;
+            WriteMemory(nn, z80.m_StackPointer.lo);
+            nn++;
             WriteMemory(nn, z80.m_StackPointer.hi);
             loopCounter += 20;
             break;
-        case 0x09:
+		}
+        case 0x09:{
             cyclesTime = 8;
             CPU_16BIT_ADD(z80.m_RegisterHL.reg, z80.m_RegisterBC.reg, 8);break;
-        case 0x0A:
+		}
+        case 0x0A:{
             cyclesTime = 8;
             CPU_REG_LOAD_ROM(z80.m_RegisterAF.hi, z80.m_RegisterBC.reg);break;
-        case 0x0B:
+		}
+        case 0x0B:{
             cyclesTime = 8;
             CPU_16BIT_DEC(z80.m_RegisterBC.reg, 8);break;
-        case 0x0C:
+		}
+        case 0x0C:{
             cyclesTime = 4;
-            CPU_8BIT_INC(z80.m_RegisterBC.lo);break;
-        case 0x0D:
+            CPU_8BIT_INC(z80.m_RegisterBC.lo,4);break;
+		}
+        case 0x0D:{
             cyclesTime = 4;
-            CPU_8BIT_DEC(z80.m_RegisterBC.lo);break;
-        default:
+            CPU_8BIT_DEC(z80.m_RegisterBC.lo,4);break;
+		}
+		case 0x0E:{
+			cyclesTime = 8;
+			CPU_8BIT_LOAD(z80.m_RegisterBC.lo);break;
+		}
+		case 0x0F:{
+			cyclesTime = 4;
+			CPU_RRC(z80.m_RegisterAF.hi);break;
+		}
+		case 0x10:{
+			cyclesTime = 4;
+			z80.m_ProgramCounter++;
+			loopCounter += 4;
+			break;
+		}
+		case 0x11:{
+			cyclesTime = 12;
+            CPU_16BIT_LOAD(z80.m_RegisterDE.reg);break;
+		}
+		case 0x12:{
+			cyclesTime = 8;
+			WriteMemory(z80.m_RegisterDE.reg, z80.m_RegisterAF.hi);loopCounter+=8;break;
+		}
+		case 0x13:{
+			cyclesTime = 8;
+            CPU_16BIT_INC(z80.m_RegisterDE.reg, 8);break;
+		}
+		case 0x14:{
+			cyclesTime = 4;
+            CPU_8BIT_INC(z80.m_RegisterDE.hi, 4);break;
+		}
+		case 0x15:{
+			cyclesTime = 4;
+            CPU_8BIT_DEC(z80.m_RegisterDE.hi, 4);break;
+		}
+		case 0x16:{
+			cyclesTime = 8;
+            CPU_8BIT_LOAD(z80.m_RegisterDE.hi);break;
+		}
+		case 0x17:{
+			cyclesTime = 4;
+			CPU_RL(z80.m_RegisterAF.hi);break;
+		}
+		case 0x18:{
+			cyclesTime = 8;
+			CPU_JUMP_IMMEDIATE(false, 0, false);break;
+		}
+		case 0x19:{
+			cyclesTime = 8;
+            CPU_16BIT_ADD(z80.m_RegisterHL.reg, z80.m_RegisterDE.reg, 8);break;
+		}
+		case 0x1A:{
+			cyclesTime = 8;
+            CPU_REG_LOAD_ROM(z80.m_RegisterAF.hi, z80.m_RegisterDE.reg);break;
+		}
+		case 0x1B:{
+			cyclesTime = 8;
+            CPU_16BIT_DEC(z80.m_RegisterDE.reg, 8);break;
+		}
+		case 0x1C:{
+			cyclesTime = 4;
+            CPU_8BIT_INC(z80.m_RegisterDE.lo,4);break;
+		}
+		case 0x1D:{
+			cyclesTime = 4;
+            CPU_8BIT_DEC(z80.m_RegisterDE.lo,4);break;
+		}
+		case 0x1E:{
+			cyclesTime = 8;
+			CPU_8BIT_LOAD(z80.m_RegisterDE.lo);break;
+		}
+		case 0x1F:{
+			cyclesTime = 4;
+			CPU_RR(z80.m_RegisterAF.hi);break;
+		}
+		case 0x20:{
+			cyclesTime = 8;
+			CPU_JUMP_IMMEDIATE(true, FLAG_Z, false);break;
+		}
+		case 0x21:{
+			cyclesTime = 12;
+            CPU_16BIT_LOAD(z80.m_RegisterHL.reg);break;
+		}
+		case 0x22:{
+			cyclesTime = 8;
+			WriteMemory(z80.m_RegisterHL.reg, z80.m_RegisterAF.hi); CPU_16BIT_INC(z80.m_RegisterHL.reg,0) ; loopCounter += 8;break;
+        }
+		case 0x23:{
+			cyclesTime = 8;
+            CPU_16BIT_INC(z80.m_RegisterHL.reg, 8);break;
+		}
+		case 0x24:{
+			cyclesTime = 4;
+            CPU_8BIT_INC(z80.m_RegisterHL.hi, 4);break;
+		}
+		case 0x25:{
+			cyclesTime = 4;
+            CPU_8BIT_DEC(z80.m_RegisterHL.hi, 4);break;
+		}
+		case 0x26:{
+			cyclesTime = 8;
+            CPU_8BIT_LOAD(z80.m_RegisterHL.hi);break;
+		}
+		case 0x27:{
+			cyclesTime = 4;
+			CPU_DAA();break;
+		}
+		case 0x28:{
+			cyclesTime = 8;
+			CPU_JUMP_IMMEDIATE(true, FLAG_Z, true);break;
+		}
+		case 0x29:{
+			cyclesTime = 8;
+            CPU_16BIT_ADD(z80.m_RegisterHL.reg, z80.m_RegisterHL.reg, 8);break;
+		}
+		case 0x2A:{
+			cyclesTime = 8;
+			CPU_REG_LOAD_ROM(z80.m_RegisterAF.hi,z80.m_RegisterHL.reg ); CPU_16BIT_INC(z80.m_RegisterHL.reg,0);break;
+		}
+		case 0x2B:{
+			cyclesTime = 8;
+            CPU_16BIT_DEC(z80.m_RegisterHL.reg, 8);break;
+		}
+		case 0x2C:{
+			cyclesTime = 4;
+            CPU_8BIT_INC(z80.m_RegisterHL.lo, 4);break;
+		}
+		case 0x2D:{
+			cyclesTime = 4;
+            CPU_8BIT_DEC(z80.m_RegisterHL.lo,4);break;
+		}
+		case 0x2E:{
+			cyclesTime = 8;
+			CPU_8BIT_LOAD(z80.m_RegisterHL.lo);break;
+		}
+		case 0x2F:{
+			cyclesTime = 4;
+			loopCounter += 4;
+			z80.m_RegisterAF.hi ^= 0xFF;
+			z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_N) ;
+			z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_H) ;
+			break;
+		}
+		case 0x30:{
+			cyclesTime = 8;
+			CPU_JUMP_IMMEDIATE(true, FLAG_C, false);break;
+		}
+		case 0x31:{
+			cyclesTime = 12;
+            CPU_16BIT_LOAD(z80.m_StackPointer.reg);break;
+		}
+		case 0x32:{
+			cyclesTime = 8;
+			WriteMemory(z80.m_RegisterHL.reg, z80.m_RegisterAF.hi); CPU_16BIT_DEC(z80.m_RegisterHL.reg,0) ; loopCounter += 8;break;
+		}
+		case 0x33:{
+			cyclesTime = 8;
+            CPU_16BIT_INC(z80.m_StackPointer.reg, 8);break;
+		}
+		case 0x34:{
+			cyclesTime = 12;
+			CPU_8BIT_MEMORY_INC(z80.m_RegisterHL.reg,12);break;
+		}
+		case 0x35:{
+			cyclesTime = 12;
+			CPU_8BIT_MEMORY_DEC(z80.m_RegisterHL.reg,12);break;
+		}
+		case 0x36:{
+			cyclesTime = 12;
+			loopCounter+=12 ;
+			byte n = ReadMemory(z80.m_ProgramCounter) ;
+			z80.m_ProgramCounter++;
+			WriteMemory(z80.m_RegisterHL.reg, n) ;
+			break;
+		}
+		case 0x37:{
+			cyclesTime = 4;
+			loopCounter += 4;
+			z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C);
+			z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_H);
+			z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_N);
+			break;
+		}
+		case 0x38:{
+			cyclesTime = 8;
+			CPU_JUMP_IMMEDIATE(true, FLAG_C, true);break;
+		}
+		case 0x39:{
+			cyclesTime = 8;
+            CPU_16BIT_ADD(z80.m_RegisterHL.reg, z80.m_StackPointer.reg, 8);break;
+		}
+		case 0x3A:{
+			cyclesTime = 8;
+			CPU_REG_LOAD_ROM(z80.m_RegisterAF.hi,z80.m_RegisterHL.reg ); CPU_16BIT_DEC(z80.m_RegisterHL.reg,0);break;
+		}
+		case 0x3B:{
+			cyclesTime = 8;
+            CPU_16BIT_DEC(z80.m_StackPointer.reg, 8);break;
+		}
+		case 0x3C:{
+			cyclesTime = 4;
+            CPU_8BIT_INC(z80.m_RegisterAF.hi, 4);break;
+		}
+		case 0x3D:{
+			cyclesTime = 4;
+            CPU_8BIT_DEC(z80.m_RegisterAF.hi,4);break;
+		}
+		case 0x3F:{
+			cyclesTime = 4;
+			loopCounter += 4 ;
+			if (TestBit8(z80.m_RegisterAF.lo, FLAG_C))
+				z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_C) ;
+			else
+				z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
+
+			z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_H) ;
+			z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_N) ;
+			break;
+		}
+		case 0x40:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.hi, z80.m_RegisterBC.hi, 4);break;
+		}
+		case 0x41:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.hi, z80.m_RegisterBC.lo, 4);break;
+		}
+		case 0x42:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.hi, z80.m_RegisterDE.hi, 4);break;
+		}
+		case 0x43:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.hi, z80.m_RegisterBC.lo, 4);break;
+		}
+		case 0x44:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.hi, z80.m_RegisterHL.hi, 4);break;
+		}
+		case 0x45:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.hi, z80.m_RegisterHL.lo, 4);break;
+		}
+		case 0x46:{
+			cyclesTime = 8;
+			CPU_REG_LOAD_ROM(z80.m_RegisterBC.hi, z80.m_RegisterHL.reg);break;
+		}
+		case 0x47:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.hi, z80.m_RegisterAF.hi, 4);break;
+		}
+		case 0x48:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.lo, z80.m_RegisterBC.hi, 4);break;
+		}
+		case 0x49:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.lo, z80.m_RegisterBC.lo, 4);break;
+		}
+		case 0x4A:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.lo, z80.m_RegisterDE.hi, 4);break;
+		}
+		case 0x4B:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.lo, z80.m_RegisterDE.lo, 4);break;
+		}
+		case 0x4C:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.lo, z80.m_RegisterHL.hi, 4);break;
+		}
+		case 0x4D:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.lo, z80.m_RegisterHL.lo, 4);break;
+		}
+		case 0x4E:{
+			cyclesTime = 8;
+			CPU_REG_LOAD_ROM(z80.m_RegisterBC.lo, z80.m_RegisterHL.reg);break;
+		}
+		case 0x4F:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterBC.lo, z80.m_RegisterAF.hi, 4);break;
+		}
+		case 0x50:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.hi, z80.m_RegisterBC.hi, 4);break;
+		}
+		case 0x51:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.hi, z80.m_RegisterBC.lo, 4);break;
+		}
+		case 0x52:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.hi, z80.m_RegisterDE.hi, 4);break;
+		}
+		case 0x53:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.hi, z80.m_RegisterDE.lo, 4);break;
+		}
+		case 0x54:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.hi, z80.m_RegisterHL.hi, 4);break;
+		}
+		case 0x55:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.hi, z80.m_RegisterHL.lo, 4);break;
+		}
+		case 0x56:{
+			cyclesTime = 8;
+			CPU_REG_LOAD_ROM(z80.m_RegisterDE.hi, z80.m_RegisterHL.reg);break;
+		}
+		case 0x57:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.hi, z80.m_RegisterAF.hi, 4);break;
+		}
+		case 0x58:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.lo, z80.m_RegisterBC.hi, 4);break;
+		}
+		case 0x59:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.lo, z80.m_RegisterBC.lo, 4);break;
+		}
+		case 0x5A:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.lo, z80.m_RegisterDE.hi, 4);break;
+		}
+		case 0x5B:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.lo, z80.m_RegisterDE.lo, 4);break;
+		}
+		case 0x5C:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.lo, z80.m_RegisterHL.hi, 4);break;
+		}
+		case 0x5D:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.lo, z80.m_RegisterHL.lo, 4);break;
+		}
+		case 0x5E:{
+			cyclesTime = 8;
+			CPU_REG_LOAD_ROM(z80.m_RegisterDE.lo, z80.m_RegisterHL.reg);break;
+		}
+		case 0x5F:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterDE.lo, z80.m_RegisterAF.hi, 4);break;
+		}
+		case 0x60:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.hi, z80.m_RegisterBC.hi, 4);break;
+		}
+		case 0x61:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.hi, z80.m_RegisterBC.lo, 4);break;
+		}
+		case 0x62:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.hi, z80.m_RegisterDE.hi, 4);break;
+		}
+		case 0x63:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.hi, z80.m_RegisterDE.lo, 4);break;
+		}
+		case 0x64:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.hi, z80.m_RegisterHL.hi, 4);break;
+		}
+		case 0x65:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.hi, z80.m_RegisterHL.lo, 4);break;
+		}
+		case 0x66:{
+			cyclesTime = 8;
+			CPU_REG_LOAD_ROM(z80.m_RegisterHL.hi, z80.m_RegisterHL.reg);break;
+		}
+		case 0x67:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.hi, z80.m_RegisterAF.hi, 4);break;
+		}
+		case 0x68:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.lo, z80.m_RegisterBC.hi, 4);break;
+		}
+		case 0x69:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.lo, z80.m_RegisterBC.lo, 4);break;
+		}
+		case 0x6A:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.lo, z80.m_RegisterDE.hi, 4);break;
+		}
+		case 0x6B:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.lo, z80.m_RegisterDE.lo, 4);break;
+		}
+		case 0x6C:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.lo, z80.m_RegisterHL.hi, 4);break;
+		}
+		case 0x6D:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.lo, z80.m_RegisterHL.lo, 4);break;
+		}
+		case 0x6E:{
+			cyclesTime = 8;
+			CPU_REG_LOAD_ROM(z80.m_RegisterHL.lo, z80.m_RegisterHL.reg);break;
+		}
+		case 0x6F:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterHL.lo, z80.m_RegisterAF.hi, 4);break;
+		}
+		case 0x70:{
+			cyclesTime = 8;
+			WriteMemory(z80.m_RegisterHL.reg, z80.m_RegisterBC.hi); loopCounter+=8; break;
+		}
+		case 0x71:{
+			cyclesTime = 8;
+			WriteMemory(z80.m_RegisterHL.reg, z80.m_RegisterBC.lo); loopCounter+=8; break;
+		}
+		case 0x72:{
+			cyclesTime = 8;
+			WriteMemory(z80.m_RegisterHL.reg, z80.m_RegisterDE.hi); loopCounter+=8; break;
+		}
+		case 0x73:{
+			cyclesTime = 8;
+			WriteMemory(z80.m_RegisterHL.reg, z80.m_RegisterDE.lo); loopCounter+=8; break;
+		}
+		case 0x74:{
+			cyclesTime = 8;
+			WriteMemory(z80.m_RegisterHL.reg, z80.m_RegisterHL.hi); loopCounter+=8; break;
+		}
+		case 0x75:{
+			cyclesTime = 8;
+			WriteMemory(z80.m_RegisterHL.reg, z80.m_RegisterHL.lo); loopCounter+=8; break;
+		}
+		case 0x76:{
+			//CPU éteit, donc on fait rien//
+			cyclesTime = 4;
+			loopCounter += 4;
+		}
+		case 0x77:{
+			cyclesTime = 8;
+			WriteMemory(z80.m_RegisterHL.reg, z80.m_RegisterAF.hi); loopCounter+=8; break;
+		}
+		case 0x78:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterAF.hi, z80.m_RegisterBC.hi, 4);break;
+		}
+		case 0x79:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterAF.hi, z80.m_RegisterBC.lo, 4);break;
+		}
+		case 0x7A:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterAF.hi, z80.m_RegisterDE.hi, 4);break;
+		}
+		case 0x7B:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterAF.hi, z80.m_RegisterDE.lo, 4);break;
+		}
+		case 0x7C:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterAF.hi, z80.m_RegisterHL.hi, 4);break;
+		}
+		case 0x7D:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterAF.hi, z80.m_RegisterHL.lo, 4);break;
+		}
+		case 0x7E:{
+			cyclesTime = 8;
+			CPU_REG_LOAD_ROM(z80.m_RegisterAF.hi, z80.m_RegisterHL.reg);break;
+		}
+		case 0x7F:{
+			cyclesTime = 4;
+			CPU_REG_LOAD(z80.m_RegisterAF.hi, z80.m_RegisterAF.hi, 4);break;
+		}
+		case 0x80:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterBC.hi,4,false,false); break;
+		}
+		case 0x81:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterBC.lo,4,false,false); break;
+		}
+		case 0x82:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterDE.hi,4,false,false); break;
+		}
+		case 0x83:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterDE.lo,4,false,false); break;
+		}
+		case 0x84:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterHL.hi,4,false,false); break;
+		}
+		case 0x85:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterHL.lo,4,false,false); break;
+		}
+		case 0x86:{
+			cyclesTime = 8;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, ReadMemory(z80.m_RegisterHL.reg),8,false,false); break;
+		}
+		case 0x87:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterAF.hi,4,false,false); break;
+		}
+		case 0x88:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterBC.hi,4,false,true); break;
+		}
+		case 0x89:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterBC.lo,4,false,true); break;
+		}
+		case 0x8A:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterDE.hi,4,false,true); break;
+		}
+		case 0x8B:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterDE.lo,4,false,true); break;
+		}
+		case 0x8C:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterHL.hi,4,false,true); break;
+		}
+		case 0x8D:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterHL.lo,4,false,true); break;
+		}
+		case 0x8E:{
+			cyclesTime = 8;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, ReadMemory(z80.m_RegisterHL.reg),8,false,true); break;
+		}
+		case 0x8F:{
+			cyclesTime = 4;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterAF.hi,4,false,true); break;
+		}
+		default:{
             break;
-    }*/
+		}
+    }
 }
 
 //OPCODE//
 
 //ASM2C//
-/*
+
 word ReadWord(){
     word res = ReadMemory(z80.m_ProgramCounter+1);
     res = res << 8;
@@ -864,44 +1418,44 @@ word ReadWord(){
     return res;
 }
 
-void CPU_8BIT_LOAD(byte* reg){
+void CPU_8BIT_LOAD(byte& reg){
     loopCounter += 8;
     byte n = ReadMemory(z80.m_ProgramCounter);
     z80.m_ProgramCounter++;
-    *reg = n;
+    reg = n;
 }
 
-void CPU_16BIT_LOAD(word* reg){
+void CPU_16BIT_LOAD(word& reg){
     loopCounter += 12;
     word n = ReadWord();
     z80.m_ProgramCounter+=2;
-    *reg = n;
+    reg = n;
 }
 
-void CPU_REG_LOAD(byte* reg, byte load, int cycles){
+void CPU_REG_LOAD(byte& reg, byte load, int cycles){
     loopCounter+=cycles;
-    *reg = load;
+    reg = load;
 }
 
-void CPU_REG_LOAD_ROM(byte* reg, word address){
+void CPU_REG_LOAD_ROM(byte& reg, word address){
     loopCounter+=8;
 	byte temp = ReadMemory(address);
-    *reg = temp;
+    reg = temp;
 }
 
-void CPU_16BIT_DEC(word* wOrd, int cycles){
+void CPU_16BIT_DEC(word& wOrd, int cycles){
     loopCounter+=cycles;
     wOrd--;
 }
 
-void CPU_16BIT_INC(word* wOrd, int cycles){
+void CPU_16BIT_INC(word& wOrd, int cycles){
     loopCounter+=cycles;
     wOrd++;
 }
 
-void CPU_8BIT_ADD(byte* reg, byte toAdd, int cycles, bool useImmediate, bool addCarry){
+void CPU_8BIT_ADD(byte& reg, byte toAdd, int cycles, bool useImmediate, bool addCarry){
     loopCounter+=cycles;
-    byte before = *reg;
+    byte before = reg;
     byte adding = 0;
 
     if(useImmediate){
@@ -919,11 +1473,11 @@ void CPU_8BIT_ADD(byte* reg, byte toAdd, int cycles, bool useImmediate, bool add
         }
     }
 
-    *reg+=adding;
+    reg+=adding;
 
     z80.m_RegisterAF.lo = 0;
 
-    if(*reg == 0){
+    if(reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z);
     }
 
@@ -938,9 +1492,9 @@ void CPU_8BIT_ADD(byte* reg, byte toAdd, int cycles, bool useImmediate, bool add
     }
 }
 
-void CPU_8BIT_SUB(byte* reg, byte subtracting, int cycles, bool useImmediate, bool subCarry){
+void CPU_8BIT_SUB(byte& reg, byte subtracting, int cycles, bool useImmediate, bool subCarry){
     loopCounter+=cycles;
-    byte before = *reg;
+    byte before = reg;
     byte toSubtract = 0;
 
     if(useImmediate){
@@ -958,11 +1512,11 @@ void CPU_8BIT_SUB(byte* reg, byte subtracting, int cycles, bool useImmediate, bo
         }
     }
 
-    *reg -= toSubtract;
+    reg -= toSubtract;
 
     z80.m_RegisterAF.lo = 0;
 
-    if(*reg == 0){
+    if(reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z);
     }
 
@@ -979,7 +1533,7 @@ void CPU_8BIT_SUB(byte* reg, byte subtracting, int cycles, bool useImmediate, bo
     }
 }
 
-void CPU_8BIT_AND(byte* reg, byte toAnd, int cycles, bool useImmediate){
+void CPU_8BIT_AND(byte& reg, byte toAnd, int cycles, bool useImmediate){
     loopCounter+=cycles;
     byte myand = 0;
 
@@ -992,18 +1546,18 @@ void CPU_8BIT_AND(byte* reg, byte toAnd, int cycles, bool useImmediate){
         myand = toAnd;
     }
 
-    *reg &= myand;
+    reg &= myand;
 
     z80.m_RegisterAF.lo = 0;
 
-    if(*reg == 0){
+    if(reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z);
     }
 
     z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_H);
 }
 
-void CPU_8BIT_OR(byte* reg, byte toOr, int cycles, bool useImmediate){
+void CPU_8BIT_OR(byte& reg, byte toOr, int cycles, bool useImmediate){
     loopCounter+=cycles;
     byte myor = 0;
 
@@ -1016,16 +1570,16 @@ void CPU_8BIT_OR(byte* reg, byte toOr, int cycles, bool useImmediate){
         myor = toOr;
     }
 
-    *reg |= myor;
+    reg |= myor;
 
     z80.m_RegisterAF.lo = 0;
 
-    if(*reg == 0){
+    if(reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z);
     }
 }
 
-void CPU_8bit_XOR(byte* reg, byte toXOr, int cycles, bool useImmediate){
+void CPU_8bit_XOR(byte& reg, byte toXOr, int cycles, bool useImmediate){
     loopCounter+=cycles;
     byte myxor = 0;
 
@@ -1038,18 +1592,18 @@ void CPU_8bit_XOR(byte* reg, byte toXOr, int cycles, bool useImmediate){
         myxor = toXOr;
     }
 
-    *reg ^= myxor;
+    reg ^= myxor;
 
     z80.m_RegisterAF.lo = 0;
 
-    if(*reg == 0){
+    if(reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z);
     }
 }
 
-void CPU_8BIT_COMPARE(byte* reg, byte subtracting, int cycles, bool useImmediate){
+void CPU_8BIT_COMPARE(byte& reg, byte subtracting, int cycles, bool useImmediate){
     loopCounter+=cycles;
-    byte before = *reg;
+    byte before = reg;
     byte toSubtract = 0;
 
     if(useImmediate){
@@ -1061,11 +1615,11 @@ void CPU_8BIT_COMPARE(byte* reg, byte subtracting, int cycles, bool useImmediate
         toSubtract = subtracting;
     }
 
-    *reg -= toSubtract;
+    reg -= toSubtract;
 
     z80.m_RegisterAF.lo = 0;
 
-    if(*reg == 0){
+    if(reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z);
     }
 
@@ -1083,16 +1637,16 @@ void CPU_8BIT_COMPARE(byte* reg, byte subtracting, int cycles, bool useImmediate
     }
 }
 
-void CPU_8BIT_INC(byte* reg, int cycles){
+void CPU_8BIT_INC(byte& reg, int cycles){
 
 
     loopCounter+= cycles ;
 
-    byte before = *reg ;
+    byte before = reg ;
 
     reg++ ;
 
-    if (*reg == 0){
+    if (reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
     }
     else{
@@ -1135,14 +1689,14 @@ void CPU_8BIT_MEMORY_INC(word address, int cycles){
     }
 }
 
-void CPU_8BIT_DEC(byte* reg, int cycles){
+void CPU_8BIT_DEC(byte& reg, int cycles){
 
     loopCounter+=cycles ;
-    byte before = *reg ;
+    byte before = reg ;
 
     reg-- ;
 
-    if (*reg == 0){
+    if (reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
     }
     else{
@@ -1181,11 +1735,11 @@ void CPU_8BIT_MEMORY_DEC(word address, int cycles){
     }
 }
 
-void CPU_16BIT_ADD(word* reg, word toAdd, int cycles){
+void CPU_16BIT_ADD(word& reg, word toAdd, int cycles){
     loopCounter += cycles;
-    word before = *reg;
+    word before = reg;
 
-    *reg += toAdd ;
+    reg += toAdd ;
 
     z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_N) ;
 
@@ -1265,15 +1819,14 @@ void CPU_RETURN(bool useCondition, int flag, bool condition){
     }
 }
 
-void CPU_SWAP_NIBBLES(byte* reg)
-{
+void CPU_SWAP_NIBBLES(byte& reg){
     loopCounter += 8 ;
 
     z80.m_RegisterAF.lo = 0 ;
 
-    *reg = (((*reg & 0xF0) >> 4) | ((*reg & 0x0F) << 4));
+    reg = (((reg & 0xF0) >> 4) | ((reg & 0x0F) << 4));
 
-    if (*reg == 0){
+    if (reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
     }
 }
@@ -1300,16 +1853,16 @@ void CPU_RESTARTS(byte n){
     z80.m_ProgramCounter = n ;
 }
 
-void CPU_SHIFT_LEFT_CARRY(byte* reg){
+void CPU_SHIFT_LEFT_CARRY(byte& reg){
 
     loopCounter += 8 ;
     z80.m_RegisterAF.lo = 0 ;
-    if (TestBit8(*reg,7)){
+    if (TestBit8(reg,7)){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C);
     }
 
-    *reg = *reg << 1 ;
-    if (*reg == 0){
+    reg = reg << 1 ;
+    if (reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
     }
 }
@@ -1330,9 +1883,9 @@ void CPU_SHIFT_LEFT_CARRY_MEMORY(word address){
     WriteMemory(address, before) ;
 }
 
-void CPU_RESET_BIT(byte* reg, int bit){
+void CPU_RESET_BIT(byte& reg, int bit){
 
-    *reg = BitReset8(*reg, bit) ;
+    reg = BitReset8(reg, bit) ;
     loopCounter += 8 ;
 }
 
@@ -1399,22 +1952,22 @@ void CPU_DAA(){
     }
 }
 
-void CPU_RR(byte* reg){
+void CPU_RR(byte& reg){
 
     loopCounter += 8 ;
 
     bool isCarrySet = TestBit8(z80.m_RegisterAF.lo, FLAG_C) ;
-    bool isLSBSet = TestBit8(*reg, 0) ;
+    bool isLSBSet = TestBit8(reg, 0) ;
 
     z80.m_RegisterAF.lo = 0 ;
 
-    *reg >>= 1 ;
+    reg >>= 1 ;
 
     if (isLSBSet){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
     }
     if (isCarrySet){
-        *reg = BitSet8(*reg, 7) ;
+        reg = BitSet8(reg, 7) ;
     }
     if (reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
@@ -1446,22 +1999,22 @@ void CPU_RR_MEMORY(word address){
     WriteMemory(address, reg) ;
 }
 
-void CPU_RLC(byte* reg){
+void CPU_RLC(byte& reg){
 
     loopCounter += 8 ;
 
-    bool isMSBSet = TestBit8(*reg, 7) ;
+    bool isMSBSet = TestBit8(reg, 7) ;
 
     z80.m_RegisterAF.lo = 0 ;
 
-    *reg <<= 1;
+    reg <<= 1;
 
     if (isMSBSet){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
-        *reg = BitSet8(*reg,0) ;
+        reg = BitSet8(reg,0) ;
     }
 
-    if (*reg == 0){
+    if (reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
     }
 }
@@ -1491,28 +2044,27 @@ void CPU_RLC_MEMORY(word address){
 
 }
 
-void CPU_RRC(byte* reg){
+void CPU_RRC(byte& reg){
 
     loopCounter += 8 ;
 
-    bool isLSBSet = TestBit8(*reg, 0) ;
+    bool isLSBSet = TestBit8(reg, 0) ;
 
     z80.m_RegisterAF.lo = 0 ;
 
-    *reg >>= 1;
+    reg >>= 1;
 
     if (isLSBSet){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
-        *reg = BitSet8(*reg,7) ;
+        reg = BitSet8(reg,7) ;
     }
 
-    if (*reg == 0){
+    if (reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
     }
 }
 
-void CPU_RRC_MEMORY(word address)
-{
+void CPU_RRC_MEMORY(word address){
 
     loopCounter += 16 ;
 
@@ -1535,13 +2087,13 @@ void CPU_RRC_MEMORY(word address)
     WriteMemory(address, reg) ;
 }
 
-void CPU_SLA(byte* reg){
+void CPU_SLA(byte& reg){
 
     loopCounter += 8 ;
 
-    bool isMSBSet = TestBit8(*reg, 7);
+    bool isMSBSet = TestBit8(reg, 7);
 
-    *reg <<= 1;
+    reg <<= 1;
 
     z80.m_RegisterAF.lo = 0 ;
 
@@ -1549,7 +2101,7 @@ void CPU_SLA(byte* reg){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
     }
 
-    if (*reg == 0){
+    if (reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
     }
 }
@@ -1575,25 +2127,25 @@ void CPU_SLA_MEMORY(word address){
     WriteMemory(address, reg) ;
 }
 
-void CPU_SRA(byte* reg){
+void CPU_SRA(byte& reg){
 
     loopCounter += 8 ;
 
-    bool isLSBSet = TestBit8(*reg,0) ;
-    bool isMSBSet = TestBit8(*reg,7) ;
+    bool isLSBSet = TestBit8(reg,0) ;
+    bool isMSBSet = TestBit8(reg,7) ;
 
     z80.m_RegisterAF.lo = 0 ;
 
-    *reg >>= 1;
+    reg >>= 1;
 
     if (isMSBSet){
-        *reg = BitSet8(*reg,7) ;
+        reg = BitSet8(reg,7) ;
     }
     if (isLSBSet){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
     }
 
-    if (*reg == 0){
+    if (reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
     }
 }
@@ -1623,20 +2175,20 @@ void CPU_SRA_MEMORY(word address){
     WriteMemory(address, reg) ;
 }
 
-void CPU_SRL(byte* reg){
+void CPU_SRL(byte& reg){
 
     loopCounter += 8 ;
 
-    bool isLSBSet = TestBit8(*reg,0) ;
+    bool isLSBSet = TestBit8(reg,0) ;
 
     z80.m_RegisterAF.lo = 0 ;
 
-    *reg >>= 1;
+    reg >>= 1;
 
     if (isLSBSet){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
     }
-    if (*reg == 0){
+    if (reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
     }
 }
@@ -1662,24 +2214,24 @@ void CPU_SRL_MEMORY(word address){
     WriteMemory(address, reg) ;
 }
 
-void CPU_RL(byte* reg){
+void CPU_RL(byte& reg){
 
     loopCounter += 8 ;
 
     bool isCarrySet = TestBit8(z80.m_RegisterAF.lo, FLAG_C) ;
-    bool isMSBSet = TestBit8(*reg, 7) ;
+    bool isMSBSet = TestBit8(reg, 7) ;
 
     z80.m_RegisterAF.lo = 0 ;
 
-    *reg <<= 1 ;
+    reg <<= 1 ;
 
     if (isMSBSet){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_C) ;
     }
     if (isCarrySet){
-        *reg = BitSet8(*reg, 0) ;
+        reg = BitSet8(reg, 0) ;
     }
-    if (*reg == 0){
+    if (reg == 0){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
     }
 }
@@ -1706,7 +2258,7 @@ void CPU_RL_MEMORY(word address){
         z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo, FLAG_Z) ;
     }
     WriteMemory(address, reg) ;
-}*/
+}
 //ASM2C//
 
 
