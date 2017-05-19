@@ -5,10 +5,6 @@
 void initZ80(){
 
 
-    memset(z80.m_CartridgeMemory,0,sizeof(z80.m_CartridgeMemory));
-    memset(&z80.m_RAMBanks,0,sizeof(z80.m_RAMBanks));
-
-
     z80.m_ProgramCounter = 0x100 ;
     z80.m_RegisterAF.reg = 0x01B0 ;
     z80.m_RegisterBC.reg = 0x0013 ;

@@ -38,13 +38,15 @@ int main(int argc, char* argv[]){
 
     initScreen();
     initPixel();
-    initZ80();
-    printf("initZ80: OK\n\n");
-
+    
     bool getReady = false;
 
     getReady = LoadGame("Tetris.gb");
-
+	
+	initZ80();
+    printf("initZ80: OK\n\n");
+	
+	
     if(getReady){
         printf("RomLoaded: OK\n\n");
     }
@@ -97,12 +99,18 @@ void Update(){
 }
 
 bool LoadGame(char *gameName){
+	
+	memset(z80.m_CartridgeMemory,0,sizeof(z80.m_CartridgeMemory));
+    memset(&z80.m_RAMBanks,0,sizeof(z80.m_RAMBanks));
+	memset(z80.m_Rom,0,sizeof(z80.m_Rom)) ;
+	
     FILE *game = NULL;
     game = fopen(gameName,"rb");
 
     if(game != NULL){
         fread(z80.m_CartridgeMemory, 1, 0x200000, game);
         fclose(game);
+		memcpy(&z80.m_Rom[0x0], &z80.m_CartridgeMemory[0], 0x8000) ;
         return true;
     }
     else{
