@@ -1401,6 +1401,440 @@ void ExecuteOpcode(byte opcode){
 			cyclesTime = 4;
 			CPU_8BIT_ADD(z80.m_RegisterAF.hi, z80.m_RegisterAF.hi,4,false,true); break;
 		}
+		case 0x90:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterBC.hi,4,false,false); break;
+		}
+		case 0x91:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterBC.lo,4,false,false); break;
+		}
+		case 0x92:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterDE.hi,4,false,false); break;
+		}
+		case 0x93:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterDE.lo,4,false,false); break;
+		}
+		case 0x94:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterHL.hi,4,false,false); break;
+		}
+		case 0x95:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterHL.lo,4,false,false); break;
+		}
+		case 0x96:{
+			cyclesTime = 8;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, ReadMemory(z80.m_RegisterHL.reg),8,false,false); break;
+		}
+		case 0x97:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterAF.hi,4,false,false); break;
+		}
+		case 0x98:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterBC.hi,4,false,true); break;
+		}
+		case 0x99:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterBC.lo,4,false,true); break;
+		}
+		case 0x9A:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterDE.hi,4,false,true); break;
+		}
+		case 0x9B:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterDE.lo,4,false,true); break;
+		}
+		case 0x9C:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterHL.hi,4,false,true); break;
+		}
+		case 0x9D:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterHL.lo,4,false,true); break;
+		}
+		case 0x9E:{
+			cyclesTime = 8;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, ReadMemory(z80.m_RegisterHL.reg),8,false,true) ; break ;
+		}
+		case 0x9F:{
+			cyclesTime = 4;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, z80.m_RegisterAF.hi,4,false,true); break;
+		}
+		case 0xA0:{
+			cyclesTime = 4;
+			CPU_8BIT_AND(z80.m_RegisterAF.hi, z80.m_RegisterBC.hi,4, false); break;
+		}
+		case 0xA1:{
+			cyclesTime = 4;
+			CPU_8BIT_AND(z80.m_RegisterAF.hi, z80.m_RegisterBC.lo,4, false); break;
+		}
+		case 0xA2:{
+			cyclesTime = 4;
+			CPU_8BIT_AND(z80.m_RegisterAF.hi, z80.m_RegisterDE.hi,4, false); break;
+		}
+		case 0xA3:{
+			cyclesTime = 4;
+			CPU_8BIT_AND(z80.m_RegisterAF.hi, z80.m_RegisterDE.lo,4, false); break;
+		}
+		case 0xA4:{
+			cyclesTime = 4;
+			CPU_8BIT_AND(z80.m_RegisterAF.hi, z80.m_RegisterHL.hi,4, false); break;
+		}
+		case 0xA5:{
+			cyclesTime = 4;
+			CPU_8BIT_AND(z80.m_RegisterAF.hi, z80.m_RegisterBC.lo,4, false); break;
+		}
+		case 0xA6:{
+			cyclesTime = 8;
+			CPU_8BIT_AND(z80.m_RegisterAF.hi, ReadMemory(z80.m_RegisterHL.reg),8, false); break;
+		}
+		case 0xA7:{
+			cyclesTime = 4;
+			CPU_8BIT_AND(z80.m_RegisterAF.hi, z80.m_RegisterAF.hi,4, false); break;
+		}
+		case 0xA8:{
+			cyclesTime = 4;
+			CPU_8BIT_XOR(z80.m_RegisterAF.hi, z80.m_RegisterBC.hi,4, false); break;
+		}
+		case 0xA9:{
+			cyclesTime = 4;
+			CPU_8BIT_XOR(z80.m_RegisterAF.hi, z80.m_RegisterBC.lo,4, false); break;
+		}
+		case 0xAA:{
+			cyclesTime = 4;
+			CPU_8BIT_XOR(z80.m_RegisterAF.hi, z80.m_RegisterDE.hi,4, false); break;
+		}
+		case 0xAB:{
+			cyclesTime = 4;
+			CPU_8BIT_XOR(z80.m_RegisterAF.hi, z80.m_RegisterDE.lo,4, false); break;
+		}
+		case 0xAC:{
+			cyclesTime = 4;
+			CPU_8BIT_XOR(z80.m_RegisterAF.hi, z80.m_RegisterHL.hi,4, false); break;
+		}
+		case 0xAD:{
+			cyclesTime = 4;
+			CPU_8BIT_XOR(z80.m_RegisterAF.hi, z80.m_RegisterHL.lo,4, false); break;
+		}
+		case 0xAE:{
+			cyclesTime = 8;
+			CPU_8BIT_XOR(z80.m_RegisterAF.hi, ReadMemory(z80.m_RegisterHL.reg),8, false); break;
+		}
+		case 0xAF:{
+			cyclesTime = 4;
+			CPU_8BIT_XOR(z80.m_RegisterAF.hi, z80.m_RegisterAF.hi,4, false); break;
+		}
+		case 0xB0:{
+			cyclesTime = 4;
+			CPU_8BIT_OR(z80.m_RegisterAF.hi, z80.m_RegisterBC.hi,4, false); break;
+		}
+		case 0xB1:{
+			cyclesTime = 4;
+			CPU_8BIT_OR(z80.m_RegisterAF.hi, z80.m_RegisterBC.lo,4, false); break;
+		}
+		case 0xB2:{
+			cyclesTime = 4;
+			CPU_8BIT_OR(z80.m_RegisterAF.hi, z80.m_RegisterDE.hi,4, false); break;
+		}
+		case 0xB3:{
+			cyclesTime = 4;
+			CPU_8BIT_OR(z80.m_RegisterAF.hi, z80.m_RegisterDE.lo,4, false); break;
+		}
+		case 0xB4:{
+			cyclesTime = 4;
+			CPU_8BIT_OR(z80.m_RegisterAF.hi, z80.m_RegisterHL.hi,4, false); break;
+		}
+		case 0xB5:{
+			cyclesTime = 4;
+			CPU_8BIT_OR(z80.m_RegisterAF.hi, z80.m_RegisterHL.lo,4, false); break;
+		}
+		case 0xB6:{
+			cyclesTime = 8;
+			CPU_8BIT_OR(z80.m_RegisterAF.hi, ReadMemory(z80.m_RegisterHL.reg),8, false); break;
+		}
+		case 0xB7:{
+			cyclesTime = 4;
+			CPU_8BIT_OR(z80.m_RegisterAF.hi, z80.m_RegisterAF.hi,4, false); break;
+		}
+		case 0xB8:{
+			cyclesTime = 4;
+			CPU_8BIT_COMPARE(z80.m_RegisterAF.hi, z80.m_RegisterBC.hi,4, false); break;
+		}
+		case 0xB9:{
+			cyclesTime = 4;
+			CPU_8BIT_COMPARE(z80.m_RegisterAF.hi, z80.m_RegisterBC.lo,4, false); break;
+		}
+		case 0xBA:{
+			cyclesTime = 4;
+			CPU_8BIT_COMPARE(z80.m_RegisterAF.hi, z80.m_RegisterDE.hi,4, false); break;
+		}
+		case 0xBB:{
+			cyclesTime = 4;
+			CPU_8BIT_COMPARE(z80.m_RegisterAF.hi, z80.m_RegisterDE.lo,4, false); break;
+		}
+		case 0xBC:{
+			cyclesTime = 4;
+			CPU_8BIT_COMPARE(z80.m_RegisterAF.hi, z80.m_RegisterHL.hi,4, false); break;
+		}
+		case 0xBD:{
+			cyclesTime = 4;
+			CPU_8BIT_COMPARE(z80.m_RegisterAF.hi, z80.m_RegisterHL.lo,4, false); break;
+		}
+		case 0xBE:{
+			cyclesTime = 8;
+			CPU_8BIT_COMPARE(z80.m_RegisterAF.hi, ReadMemory(z80.m_RegisterHL.reg),8, false); break;
+		}
+		case 0xBF:{
+			cyclesTime = 4;
+			CPU_8BIT_COMPARE(z80.m_RegisterAF.hi, z80.m_RegisterAF.hi,4, false); break;
+		}
+		case 0xC0:{
+			cyclesTime = 8;
+			CPU_RETURN(true, FLAG_Z, false); break;
+		}
+		case 0xC1:{
+			cyclesTime = 12;
+			z80.m_RegisterBC.reg = PopWordOffStack(); loopCounter+=12;break;
+		}
+		case 0xC2:{
+			cyclesTime = 12;
+			CPU_JUMP(true, FLAG_Z, false); break;
+		}
+		case 0xC3:{
+			cyclesTime = 12; //maybe 16
+			CPU_JUMP(false, 0, false); break;
+		}
+		case 0xC4:{
+			cyclesTime = 12;
+			CPU_CALL(true, FLAG_Z, false); break;
+		}
+		case 0xC5:{
+			cyclesTime = 16;
+			PushWordOntoStack(z80.m_RegisterBC.reg); loopCounter+=16; break;
+		}
+		case 0xC6:{
+			cyclesTime = 8;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, 0, 8, true, false); break;
+		}
+		case 0xC7:{
+			cyclesTime = 16;
+			CPU_RESTARTS(0x00); break;
+		}
+		case 0xC8:{
+			cyclesTime = 8;
+			CPU_RETURN(true, FLAG_Z, true); break;
+		}
+		case 0xC9:{
+			cyclesTime = 8;
+			CPU_RETURN( false, 0, false ) ; break ;
+		}
+		case 0xCA:{
+			cyclesTime = 12;
+			CPU_JUMP(true, FLAG_Z, true); break;
+		}
+		case 0xCB:{
+			//ExecuteExtendedOpcode(); break;
+		}
+		case 0xCC:{
+			cyclesTime = 12;
+			CPU_CALL(true, FLAG_Z, true) ;break ;
+		}
+		case 0xCD:{
+			cyclesTime = 12;
+			CPU_CALL(false, 0, false); break;
+		}
+		case 0xCE:{
+			cyclesTime = 8;
+			CPU_8BIT_ADD(z80.m_RegisterAF.hi, 0,8,true,true); break;
+		}
+		case 0xCF:{
+			cyclesTime = 16;
+			CPU_RESTARTS(0x08); break;
+		}
+		case 0xD0:{
+			cyclesTime = 8;
+			CPU_RETURN(true, FLAG_C, false); break;
+		}
+		case 0xD1:{
+			loopCounter = 12;
+			z80.m_RegisterDE.reg = PopWordOffStack(); loopCounter+=12 ;break;
+		}
+		case 0xD2:{
+			cyclesTime = 12;
+			CPU_JUMP(true, FLAG_C, false); break;
+		}
+		case 0xD4:{
+			cyclesTime = 12;
+			CPU_CALL(true, FLAG_C, false); break;
+		}
+		case 0xD5:{
+			cyclesTime = 16;
+			PushWordOntoStack(z80.m_RegisterDE.reg); loopCounter+=16; break;
+		}
+		case 0xD6:{
+			cyclesTime = 8;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, 0,8,true,false) ; break ;
+		}
+		case 0xD7:{
+			cyclesTime = 16;
+			CPU_RESTARTS(0x10); break;
+		}
+		case 0xD8:{
+			cyclesTime = 8;
+			CPU_RETURN(true, FLAG_C, true); break;
+		}
+		case 0xD9:{
+			z80.m_ProgramCounter = PopWordOffStack();
+			z80.m_InteruptMaster = true;
+			loopCounter+=8;
+			break;
+		}
+		case 0xDA:{
+			cyclesTime = 12;
+			CPU_JUMP(true, FLAG_C, true); break;
+		}
+		case 0xDC:{
+			cyclesTime = 12;
+			CPU_CALL(true, FLAG_C, true); break;
+		}
+		case 0xDE:{
+			cyclesTime = 8;
+			CPU_8BIT_SUB(z80.m_RegisterAF.hi, 0,8,true,true); break;
+		}
+		case 0xDF:{
+			cyclesTime = 16;
+			CPU_RESTARTS(0x18); break;
+		}
+		case 0xE0:{
+			cyclesTime = 12;
+			byte n = ReadMemory(z80.m_ProgramCounter) ;
+			z80.m_ProgramCounter++;
+			word address = 0xFF00 + n;
+			WriteMemory(address, z80.m_RegisterAF.hi) ;
+			loopCounter += 12 ;
+			break;
+		}
+		case 0xE1:{
+			cyclesTime = 12;
+			z80.m_RegisterHL.reg = PopWordOffStack(); loopCounter+=12; break;
+		}
+		case 0xE2:{
+			cyclesTime = 8;
+			WriteMemory((0xFF00+z80.m_RegisterBC.lo), z80.m_RegisterAF.hi) ; loopCounter+=8; break ;
+		}
+		case 0xE5:{
+			PushWordOntoStack(z80.m_RegisterHL.reg); loopCounter+=16; break;
+		}
+		case 0xE6:{
+			cyclesTime = 8;
+			CPU_8BIT_AND(z80.m_RegisterAF.hi, 0,8, true); break;
+		}
+		case 0xE7:{
+			cyclesTime = 16;
+			CPU_RESTARTS(0x20); break;
+		}
+		case 0xE9:{
+			cyclesTime = 4;
+			loopCounter+=4; z80.m_ProgramCounter = z80.m_RegisterHL.reg; break;
+		}
+		case 0xEA:{
+			cyclesTime = 16;
+			loopCounter += 16;
+			word nn = ReadWord();
+			z80.m_ProgramCounter+=2;
+			WriteMemory(nn, z80.m_RegisterAF.hi);
+			break;
+		}
+		case 0xEE:{
+			cyclesTime = 8;
+			CPU_8BIT_XOR(z80.m_RegisterAF.hi, 0,8, true); break;
+		}
+		case 0xF0:{
+			cyclesTime = 12;
+			byte n = ReadMemory(z80.m_ProgramCounter) ;
+			z80.m_ProgramCounter++ ;
+			word address = 0xFF00 + n ;
+			z80.m_RegisterAF.hi = ReadMemory( address ) ;
+			loopCounter+=12 ;
+		}
+		case 0xF1:{
+			cyclesTime = 12;
+			z80.m_RegisterAF.reg = PopWordOffStack(); loopCounter+=12 ;break;
+		}
+		case 0xF2:{
+			cyclesTime = 8;
+			CPU_REG_LOAD_ROM(z80.m_RegisterAF.hi, (0xFF00+z80.m_RegisterBC.lo)); break;
+		}
+		case 0xF3:{
+			cyclesTime = 4;
+			z80.m_PendingInteruptDisabled = true;
+			loopCounter+=4;
+		}
+		case 0xF5:{
+			cyclesTime = 16;
+			PushWordOntoStack(z80.m_RegisterAF.reg); loopCounter+=16; break;
+		}
+		case 0xF6:{
+			cyclesTime = 8;
+			CPU_8BIT_OR(z80.m_RegisterAF.hi, 0,8, true); break;
+		}
+		case 0xF7:{
+			cyclesTime = 16;
+			CPU_RESTARTS(0x30); break;
+		}
+		case 0xF8:{
+			cyclesTime = 12;
+			loopCounter += 12;
+			signed_byte n = ReadMemory(z80.m_ProgramCounter);
+			z80.m_ProgramCounter++;
+			z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_Z);
+			z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo, FLAG_N);
+
+
+			word value = (z80.m_StackPointer.reg + n) & 0xFFFF;
+
+			z80.m_RegisterHL.reg = value ;
+			//unsigned int v = z80.m_StackPointer.reg + n ;
+
+			if( n > 0xFFFF ){
+				z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo,FLAG_C);
+			}
+			else{
+				z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo,FLAG_C);
+			}
+			
+			if( (z80.m_StackPointer.reg & 0xF) + (n & 0xF) > 0xF ){
+				z80.m_RegisterAF.lo = BitSet8(z80.m_RegisterAF.lo,FLAG_H) ;
+			}
+			else{
+				z80.m_RegisterAF.lo = BitReset8(z80.m_RegisterAF.lo,FLAG_H) ;
+			}
+		}
+		case 0xF9:{
+			cyclesTime = 8;
+			z80.m_StackPointer.reg = z80.m_RegisterHL.reg ; loopCounter+=8; break ;
+		}
+		case 0xFA:{
+			cyclesTime = 16;
+			loopCounter+=16;
+			word nn = ReadWord();
+			z80.m_ProgramCounter+=2;
+			byte n = ReadMemory(nn);
+			z80.m_RegisterAF.hi = n;
+		}
+		case 0xFE:{
+			cyclesTime = 8;
+			CPU_8BIT_COMPARE(z80.m_RegisterAF.hi, 0,8, true); break;
+		}
+		case 0xFF:{
+			cyclesTime = 16;
+			CPU_RESTARTS(0x38); break;
+		}
 		default:{
             break;
 		}
