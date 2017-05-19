@@ -64,6 +64,9 @@ typedef struct{
   bool m_InteruptMaster;
   int m_ScanlineCounter;
 
+  bool m_PendingInteruptDisabled;
+  bool m_PendingInteruptEnabled;
+  
 }Z80;
 
 Z80 z80;

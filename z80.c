@@ -54,6 +54,8 @@ void initZ80(){
     z80.m_DividerRegister = 0;
     z80.m_DividerCounter = 0;
     z80.m_ScanlineCounter = 0;
+	z80.m_PendingInteruptDisabled = false;
+	z80.m_PendingInteruptEnabled = false;
 
 }
 
@@ -794,6 +796,24 @@ void ExecuteNextOpcode(){
     byte opcode = ReadMemory(z80.m_ProgramCounter);
     z80.m_ProgramCounter++;
     ExecuteOpcode(opcode);
+	
+	if (z80.m_PendingInteruptDisabled)
+	{
+		if (ReadMemory(z80.m_ProgramCounter-1) != 0xF3)
+		{
+			z80.m_PendingInteruptDisabled = false ;
+			z80.m_InteruptMaster = false ;
+		}
+	}
+
+	if (z80.m_PendingInteruptEnabled)
+	{
+		if (ReadMemory(z80.m_ProgramCounter-1) != 0xFB)
+		{
+			z80.m_PendingInteruptEnabled = false ;
+			z80.m_InteruptMaster = true ;
+		}
+	}
 }
 
 
@@ -2013,7 +2033,7 @@ void CPU_8BIT_OR(byte& reg, byte toOr, int cycles, bool useImmediate){
     }
 }
 
-void CPU_8bit_XOR(byte& reg, byte toXOr, int cycles, bool useImmediate){
+void CPU_8BIT_XOR(byte& reg, byte toXOr, int cycles, bool useImmediate){
     loopCounter+=cycles;
     byte myxor = 0;
 
