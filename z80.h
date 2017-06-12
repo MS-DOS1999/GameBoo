@@ -40,7 +40,7 @@ typedef struct{
   PIXEL m_ScreenData[160][144];
 
   byte m_Rom[0x10000];
-  byte m_RAMBanks[0x8000];
+  std::vector<byte*> m_RAMBanks;
   bool m_RomBanking;
 
   Register m_RegisterAF;
@@ -50,6 +50,8 @@ typedef struct{
 
   word m_ProgramCounter;
   Register m_StackPointer;
+  
+  byte m_JoypadState;
 
   bool m_MBC1;
   bool m_MBC2;
@@ -63,6 +65,8 @@ typedef struct{
   int m_DividerCounter;
   bool m_InteruptMaster;
   int m_ScanlineCounter;
+  
+  bool m_Halted;
 
   bool m_PendingInteruptDisabled;
   bool m_PendingInteruptEnabled;
@@ -80,6 +84,10 @@ typedef enum{
 
 void initZ80();
 void DetectMapper();
+void CreateRamBanks(int);
+void KeyPressed(int);
+void KeyReleased(int);
+byte GetJoypadState();
 void WriteMemory(word, byte);
 byte ReadMemory(word);
 void HandleBanking(word, byte);
@@ -106,6 +114,9 @@ COLOR GetColor(byte, word);
 void RenderSprites(byte);
 void ExecuteNextOpcode();
 void ExecuteOpcode(byte);
+void ExecuteExtendedOpcode();
+	
+
 
 //ASM2C//
 		word ReadWord();
@@ -113,12 +124,13 @@ void ExecuteOpcode(byte);
 		void CPU_16BIT_LOAD(word&);
 		void CPU_REG_LOAD(byte&, byte, int);
 		void CPU_REG_LOAD_ROM(byte&, word);
+		word CPU_8BIT_SIGNED_ADD(word&, byte, int);
 		void CPU_8BIT_ADD(byte&, byte, int, bool, bool);
 		void CPU_8BIT_SUB(byte&, byte, int, bool, bool);
 		void CPU_8BIT_AND(byte&, byte, int, bool);
 		void CPU_8BIT_OR(byte&, byte, int, bool);
 		void CPU_8BIT_XOR(byte&, byte, int, bool);
-		void CPU_8BIT_COMPARE(byte&, byte, int, bool);
+		void CPU_8BIT_COMPARE(byte, byte, int, bool);
 		void CPU_8BIT_INC(byte&, int);
 		void CPU_8BIT_DEC(byte&, int);
 		void CPU_8BIT_MEMORY_INC(word, int);

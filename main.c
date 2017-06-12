@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <vector>
 #include <SDL/SDL.h>
 
 int loopCounter = 0;
@@ -16,6 +17,7 @@ void initPixel();
 void drawPixel(PIXEL);
 void RenderScreen();
 bool LoadGame(char *);
+void HandleInput(SDL_Event&);
 void Update();
 
 
@@ -41,11 +43,10 @@ int main(int argc, char* argv[]){
     
     bool getReady = false;
 
-    getReady = LoadGame("Tetris.gb");
+    getReady = LoadGame(filePath);
 	
 	initZ80();
     printf("initZ80: OK\n\n");
-	
 	
     if(getReady){
         printf("RomLoaded: OK\n\n");
@@ -66,21 +67,31 @@ int main(int argc, char* argv[]){
     }
 
 	
-	//on redirige le stdout de la SDL pour l'afficher sur la console ;) //
-    freopen( "CON", "w", stdout );
-    freopen( "CON", "w", stderr );
-    //HELL YEAH//
+	
 	
     if(getReady){
+		bool quit = false ;
+		SDL_Event event;
 		float fps = 59.73;
 		float interval = 1000;
 		interval /= fps;
-		while(1){
+		while(!quit){
+			while(SDL_PollEvent(&event)){
+				HandleInput(event);
+
+				if(event.type == SDL_QUIT){
+					quit = true;
+				}
+			}
 			Update();
 			SDL_Delay(interval);
 		}
+		SDL_Quit();
     }
-
+//on redirige le stdout de la SDL pour l'afficher sur la console ;) //
+			freopen( "CON", "w", stdout );
+			freopen( "CON", "w", stderr );
+			//HELL YEAH//
     return EXIT_SUCCESS;
 }
 
@@ -117,6 +128,8 @@ bool LoadGame(char *gameName){
         printf("Error opening file, try again :/");
         return false;
     }
+	
+	z80.m_CurrentROMBank = 1;
 }
 
 void initSDL(){
@@ -219,3 +232,37 @@ void RenderScreen(){
 }
 
 
+void HandleInput(SDL_Event& event){
+	if( event.type == SDL_KEYDOWN ){
+		int key = -1 ;
+		switch( event.key.keysym.sym ){
+			case SDLK_a : key = 4 ; break ;
+			case SDLK_s : key = 5 ; break ;
+			case SDLK_RETURN : key = 7 ; break ;
+			case SDLK_SPACE : key = 6; break ;
+			case SDLK_RIGHT : key = 0 ; break ;
+			case SDLK_LEFT : key = 1 ; break ;
+			case SDLK_UP : key = 2 ; break ;
+			case SDLK_DOWN : key = 3 ; break ;
+		}
+		if (key != -1){
+			KeyPressed(key) ;
+		}
+	}
+	else if( event.type == SDL_KEYUP ){
+		int key = -1 ;
+		switch( event.key.keysym.sym ){
+			case SDLK_a : key = 4 ; break ;
+			case SDLK_s : key = 5 ; break ;
+			case SDLK_RETURN : key = 7 ; break ;
+			case SDLK_SPACE : key = 6; break ;
+			case SDLK_RIGHT : key = 0 ; break ;
+			case SDLK_LEFT : key = 1 ; break ;
+			case SDLK_UP : key = 2 ; break ;
+			case SDLK_DOWN : key = 3 ; break ;
+		}
+		if (key != -1){
+			KeyReleased(key) ;
+		}
+	}
+}

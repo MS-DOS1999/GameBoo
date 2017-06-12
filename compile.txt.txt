@@ -1,1 +1,1 @@
-g++ -Wall -g main.c -o lel.exe -lmingw32 -lSDLmain -lSDL -Wno-write-strings
+g++ -Wall -g main.c -o lel.exe -lmingw32 -lSDLmain -lSDL -Wno-write-strings -Wno-switch
