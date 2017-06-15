@@ -61,6 +61,7 @@ typedef struct{
 
   bool m_EnableRAM;
   int m_TimerCounter;
+  int m_TimerSpeed;
   int m_DividerRegister;
   int m_DividerCounter;
   bool m_InteruptMaster;
@@ -68,8 +69,9 @@ typedef struct{
   
   bool m_Halted;
 
-  bool m_PendingInteruptDisabled;
-  bool m_PendingInteruptEnabled;
+  bool m_InteruptDelay;
+  
+  bool m_SkipInstruction;
   
 }Z80;
 
@@ -115,6 +117,7 @@ void RenderSprites(byte);
 void ExecuteNextOpcode();
 void ExecuteOpcode(byte);
 void ExecuteExtendedOpcode();
+void WriteU16(word, word);
 	
 
 

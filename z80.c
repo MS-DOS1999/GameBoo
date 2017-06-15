@@ -44,19 +44,20 @@ void initZ80(){
     z80.m_Rom[0xFF49] = 0xFF ;
     z80.m_Rom[0xFF4A] = 0x00 ;
     z80.m_Rom[0xFF4B] = 0x00 ;
+	z80.m_Rom[0xFF0F] = 0xE1 ;
     z80.m_Rom[0xFFFF] = 0x00 ;
 
     z80.m_CurrentROMBank = 1;
     z80.m_CurrentRAMBank = 0;
-    z80.m_TimerCounter = 1024;
+    z80.m_TimerCounter = 0;
+	z80.m_TimerSpeed = 1024;
     z80.m_InteruptMaster = false;
     z80.m_DividerRegister = 0;
     z80.m_ScanlineCounter = 0;
-	z80.m_PendingInteruptDisabled = false;
-	z80.m_PendingInteruptEnabled = false;
+	z80.m_InteruptDelay = false;
 	z80.m_JoypadState = 0xFF;
 	z80.m_Halted = false;
-
+	z80.m_SkipInstruction = false;
 }
 
 void DetectMapper(){
@@ -132,7 +133,7 @@ void KeyPressed(int key)
    }
 
    if (requestInterupt && !previouslyUnset){
-		RequestInterupts(4);
+		z80.m_Rom[0xFF0F] |= 0x10;
    }
 }
 
@@ -275,11 +276,17 @@ void HandleBanking(word address, byte data){
 			
             DoRAMBankEnable(address,data);
         }
+		else{
+			z80.m_Rom[address] = data;
+		}
     }
     else if((address>=0x2000) && (address<0x4000)){
         if(z80.m_MBC1 || z80.m_MBC2){
             DoChangeLoROMBank(data);
         }
+		else{
+			z80.m_Rom[address] = data;
+		}
     }
     else if((address>=0x4000) && (address<0x6000)){
         if(z80.m_MBC1){
@@ -292,11 +299,17 @@ void HandleBanking(word address, byte data){
                 DoRAMBankChange(data);
             }
         }
+		else{
+			z80.m_Rom[address] = data;
+		}
     }
     else if((address>=0x6000) && (address<0x8000)){
         if(z80.m_MBC1){
             DoChangeROMRAMMode(data);
         }
+		else{
+			z80.m_Rom[address] = data;
+		}
     }
 
 }
@@ -377,6 +390,11 @@ void DoChangeROMRAMMode(byte data){
     }
 	
 }
+
+void WriteU16(word address, word data){
+	WriteMemory(address, (data & 0xFF));
+	WriteMemory((address + 1), (data >> 8));
+}
 //MEMORY READ/WRITE//
 
 
@@ -387,30 +405,25 @@ void UpdateTimers(int cycles){
 	DoDividerRegister(cycles);
 
     if(IsClockEnabled()){
-        z80.m_TimerCounter -= cycles;
+        z80.m_TimerCounter += cycles;
 
-        if(z80.m_TimerCounter <= 0){
-            SetClockFreq();
-
-            if(ReadMemory(TIMA) == 255){
-                WriteMemory(TIMA, ReadMemory(TMA));
-                RequestInterupts(2);
-            }
-            else{
-                WriteMemory(TIMA, ReadMemory(TIMA)+1);
-            }
-        }
+        SetClockFreq();
+		
+		if(z80.m_TimerCounter >= z80.m_TimerSpeed){
+			z80.m_Rom[0xFF05]++;
+			z80.m_TimerCounter -= z80.m_TimerSpeed;
+			
+			if(z80.m_Rom[0xFF05] == 0){
+				z80.m_Rom[0xFF0F] |= 0x04;
+				z80.m_Rom[0xFF05] = z80.m_Rom[0xFF06];
+			}
+		}
     }
 	
 }
 
 bool IsClockEnabled(){
-    if(TestBit8(ReadMemory(TMC),2)){
-        return true;
-    }
-    else{
-        return false;
-    }
+    return ReadMemory(TMC) & 0x4;
 }
 
 byte GetClockFreq(){
@@ -422,16 +435,16 @@ void SetClockFreq(){
 
     switch(freq){
         case 0:
-            z80.m_TimerCounter = 1024;
+            z80.m_TimerSpeed = 1024;
             break;
         case 1:
-            z80.m_TimerCounter = 16;
+            z80.m_TimerSpeed = 16;
             break;
         case 2:
-            z80.m_TimerCounter = 64;
+            z80.m_TimerSpeed = 64;
             break;
         case 3:
-            z80.m_TimerCounter = 256;
+            z80.m_TimerSpeed = 256;
             break;
         default:
             printf("frequency has not been changed");
@@ -441,8 +454,8 @@ void SetClockFreq(){
 
 void DoDividerRegister(int cycles){
     z80.m_DividerRegister += cycles;
-    if(z80.m_DividerRegister >= 255){
-        z80.m_DividerRegister = 0;
+    if(z80.m_DividerRegister >= 256){
+        z80.m_DividerRegister -= 256;
         z80.m_Rom[0xFF04]++;
     }
 }
@@ -451,56 +464,59 @@ void DoDividerRegister(int cycles){
 
 //INTERUPTS//
 
-void RequestInterupts(int id){
-    byte req = ReadMemory(0xFF0F);
-    req = BitSet8(req, id);
-    WriteMemory(0xFF0F, id);
-}
-
 void DoInterupts(){
-    if(z80.m_InteruptMaster == true){
-        byte req = ReadMemory(0xFF0F);
-        
-        if(req > 0){
-            int i;
-            for(i = 0; i < 8; i++){
-                if(TestBit8(req, i) == true){
-					byte Enabled = ReadMemory(0xFFFF);
-                    if(TestBit8(Enabled, i) == true){
-                        ServiceInterupt(i);
-                    }
-                }
-            }
-        }
+	if(z80.m_InteruptDelay){
+		z80.m_InteruptDelay = false;
+		z80.m_InteruptMaster = true;
+	}
+    else if(z80.m_InteruptMaster){
+        //Vblank Interupt
+		if((z80.m_Rom[0xFFFF] & 0x1) && (z80.m_Rom[0xFF0F] & 0x1)){
+			printf("Vblank int");
+			z80.m_InteruptMaster = false;
+			z80.m_Halted = false;
+			z80.m_Rom[0xFF0F] &= ~0x01;
+			z80.m_StackPointer.reg -= 2;
+			WriteU16(z80.m_StackPointer.reg, z80.m_ProgramCounter);
+			z80.m_ProgramCounter = 0x40;
+			loopCounter += 36;
+		}
+		//LCD Status Interupt
+		if((z80.m_Rom[0xFFFF] & 0x02) && (z80.m_Rom[0xFF0F] & 0x02)){
+			printf("LCD int");
+			z80.m_InteruptMaster = false;
+			z80.m_Halted = false;
+			z80.m_Rom[0xFF0F] &= ~0x02;
+			z80.m_StackPointer.reg -= 2;
+			WriteU16(z80.m_StackPointer.reg, z80.m_ProgramCounter);
+			z80.m_ProgramCounter = 0x48;
+			loopCounter += 36;
+		}
+		//Timer Overflow Interupt
+		if((z80.m_Rom[0xFFFF] & 0x04) && (z80.m_Rom[0xFF0F] & 0x04)){
+			printf("Timer int");
+			z80.m_InteruptMaster = false;
+			z80.m_Halted = false;
+			z80.m_Rom[0xFF0F] &= ~0x04;
+			z80.m_StackPointer.reg -= 2;
+			WriteU16(z80.m_StackPointer.reg, z80.m_ProgramCounter);
+			z80.m_ProgramCounter = 0x50;
+			loopCounter += 36;
+		}
+		//Joypad Interupt
+		if((z80.m_Rom[0xFFFF] & 0x10) && (z80.m_Rom[0xFF0F] & 0x10)){
+			z80.m_InteruptMaster = false;
+			z80.m_Halted = false;
+			z80.m_Rom[0xFF0F] &= ~0x10;
+			z80.m_StackPointer.reg -= 2;
+			WriteU16(z80.m_StackPointer.reg, z80.m_ProgramCounter);
+			z80.m_ProgramCounter = 0x60;
+			loopCounter += 36;
+		}
     }
-}
-
-void ServiceInterupt(int interupt){
-
-
-    PushWordOntoStack(z80.m_ProgramCounter);
-	z80.m_Halted = false;
-
-    switch(interupt){
-        case 0:
-            z80.m_ProgramCounter = 0x40;
-            break;
-        case 1:
-            z80.m_ProgramCounter = 0x48;
-            break;
-        case 2:
-            z80.m_ProgramCounter = 0x50;
-            break;
-        case 4:
-            z80.m_ProgramCounter = 0x60;
-            break;
-        default:
-            printf("no interupt");
-            break;
-    }
-	
-	z80.m_InteruptMaster = false;
-	z80.m_Rom[0xFF0F] = BitReset8(z80.m_Rom[0xFF0F], interupt);
+	else if((z80.m_Rom[0xFF0F] & z80.m_Rom[0xFFFF] & 0x1F) && (!z80.m_SkipInstruction)){
+		z80.m_Halted = false;
+	}
 }
 
 //INTERUPTS//
@@ -525,7 +541,7 @@ void UpdateGraphics(int cycles){
         z80.m_ScanlineCounter = 456;
 		//printf("current line: %d", currentline);
         if(currentline == 144){
-            RequestInterupts(0);
+            z80.m_Rom[0xFF0F] |= 0x01;
         }
         else if(currentline > 153){
             z80.m_Rom[0xFF44] = 0;
@@ -583,7 +599,7 @@ void SetLCDStatus(){
     }
 
     if(reqInt && (mode != currentmode)){
-        RequestInterupts(1);
+        z80.m_Rom[0xFF0F] |= 0x02;
     }
 
     byte ly = ReadMemory(0xFF44);
@@ -591,7 +607,7 @@ void SetLCDStatus(){
     if(ly == ReadMemory(0xFF45)){
         status = BitSet8(status, 2);
         if(TestBit8(status, 6)){
-            RequestInterupts(1);
+            z80.m_Rom[0xFF0F] |= 0x02;
         }
     }
     else{
@@ -944,28 +960,22 @@ void ExecuteNextOpcode(){
     byte opcode = ReadMemory(z80.m_ProgramCounter);
 	
 	//printf("PC : 0x%08x\n", z80.m_ProgramCounter);
-	//printf("OPCODE : 0x%08x\n", opcode);
+	//rintf("OPCODE : 0x%08x\n", opcode);
 	
 	if(!z80.m_Halted){
 		z80.m_ProgramCounter++;
 		ExecuteOpcode(opcode);
 	}
 	else{
-		cyclesTime = 4;
-		loopCounter+=4;
-	}
-	
-	if (z80.m_PendingInteruptDisabled){
-		if (ReadMemory(z80.m_ProgramCounter-1) != 0xF3){
-			z80.m_PendingInteruptDisabled = false ;
-			z80.m_InteruptMaster = false ;
+		if(z80.m_InteruptMaster || !z80.m_SkipInstruction){
+			loopCounter+=4;
+			cyclesTime = 4;
 		}
-	}
-
-	if (z80.m_PendingInteruptEnabled){
-		if (ReadMemory(z80.m_ProgramCounter-1) != 0xFB){
-			z80.m_PendingInteruptEnabled = false ;
-			z80.m_InteruptMaster = true ;
+		else if(z80.m_SkipInstruction){
+			z80.m_Halted = false;
+			z80.m_SkipInstruction = false;
+			
+			ExecuteOpcode(opcode);
 		}
 	}
 }
@@ -1042,8 +1052,8 @@ void ExecuteOpcode(byte opcode){
 			CPU_8BIT_LOAD(z80.m_RegisterBC.lo);break;
 		}
 		case 0x0F:{
-			cyclesTime = 4;
-			loopCounter += 4;
+			cyclesTime = 8;
+			loopCounter += 8;
 			CPU_RRC(z80.m_RegisterAF.hi);z80.m_RegisterAF.lo &= ~0x80;break;
 		}
 		case 0x10:{
@@ -1077,8 +1087,8 @@ void ExecuteOpcode(byte opcode){
             CPU_8BIT_LOAD(z80.m_RegisterDE.hi);break;
 		}
 		case 0x17:{
-			cyclesTime = 4;
-			loopCounter += 4;
+			cyclesTime = 8;
+			loopCounter += 8;
 			CPU_RL(z80.m_RegisterAF.hi); z80.m_RegisterAF.lo &= ~0x80; break;
 		}
 		case 0x18:{
@@ -1110,8 +1120,8 @@ void ExecuteOpcode(byte opcode){
 			CPU_8BIT_LOAD(z80.m_RegisterDE.lo);break;
 		}
 		case 0x1F:{
-			cyclesTime = 4;
-			loopCounter += 4;
+			cyclesTime = 8;
+			loopCounter += 8;
 			CPU_RR(z80.m_RegisterAF.hi);z80.m_RegisterAF.lo &= ~0x80;break;
 		}
 		case 0x20:{
@@ -1487,6 +1497,17 @@ void ExecuteOpcode(byte opcode){
 			cyclesTime = 4;
 			loopCounter += 4;
 			z80.m_Halted = true;
+			
+			bool tempSkip = false;
+			
+			if((z80.m_Rom[0xFFFF] & z80.m_Rom[0xFF0F] & 0x1F) && (!z80.m_InteruptMaster)){
+				tempSkip = true;
+			}
+			else{
+				tempSkip = false;
+			}
+			
+			z80.m_SkipInstruction = tempSkip; 
 			break;
 		}
 		case 0x77:{
@@ -1826,8 +1847,7 @@ void ExecuteOpcode(byte opcode){
 			CPU_JUMP(true, FLAG_Z, true); break;
 		}
 		case 0xCB:{
-			cyclesTime = 4;
-			ExecuteExtendedOpcode(); break;
+			ExecuteExtendedOpcode(); cyclesTime+=4; loopCounter+=4; break;
 		}
 		case 0xCC:{
 			cyclesTime = 12;
@@ -1878,6 +1898,7 @@ void ExecuteOpcode(byte opcode){
 			CPU_RETURN(true, FLAG_C, true); break;
 		}
 		case 0xD9:{
+			cyclesTime = 8;
 			z80.m_ProgramCounter = PopWordOffStack();
 			z80.m_InteruptMaster = true;
 			loopCounter+=8;
@@ -1917,6 +1938,7 @@ void ExecuteOpcode(byte opcode){
 			WriteMemory((0xFF00+z80.m_RegisterBC.lo), z80.m_RegisterAF.hi) ; loopCounter+=8; break ;
 		}
 		case 0xE5:{
+			cyclesTime = 16;
 			PushWordOntoStack(z80.m_RegisterHL.reg); loopCounter+=16; break;
 		}
 		case 0xE6:{
@@ -1973,7 +1995,7 @@ void ExecuteOpcode(byte opcode){
 		}
 		case 0xF3:{
 			cyclesTime = 4;
-			z80.m_PendingInteruptDisabled = true;
+			z80.m_InteruptMaster = false;
 			loopCounter+=4;
 			break;
 		}
@@ -2011,7 +2033,7 @@ void ExecuteOpcode(byte opcode){
 		}
 		case 0xFB:{
 			cyclesTime = 4;
-			z80.m_PendingInteruptEnabled = true;
+			z80.m_InteruptDelay = true;
 			loopCounter+=4;
 			break;
 		}
@@ -2038,11 +2060,9 @@ void ExecuteOpcode(byte opcode){
 }
 
 void ExecuteExtendedOpcode(){
-	byte opcode = z80.m_Rom[z80.m_ProgramCounter];
+	byte opcode;
 
-	if ((z80.m_ProgramCounter >= 0x4000 && z80.m_ProgramCounter <= 0x7FFF) || (z80.m_ProgramCounter >= 0xA000 && z80.m_ProgramCounter <= 0xBFFF)){
-		opcode = ReadMemory(z80.m_ProgramCounter);
-	}
+	opcode = ReadMemory(z80.m_ProgramCounter);
 	
 	z80.m_ProgramCounter++;
 
