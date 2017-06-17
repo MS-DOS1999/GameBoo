@@ -1,0 +1,15 @@
+Indiquez le 'chemin absolu/absolute path' de votre rom :  Scanf: OK
+
+initSDL: OK
+
+initScreen: OK
+
+initPixel: OK
+
+initZ80: OK
+
+RomLoaded: OK
+
+ROM PCB: MBC1
+
+Timer int

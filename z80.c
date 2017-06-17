@@ -189,6 +189,8 @@ word PopWordOffStack(){
 
 void WriteMemory(word address, byte data){
 	
+	//printf("Write(0x%08x)\n", address);
+	
 	if(address < 0x8000){
         HandleBanking(address, data);
     }
@@ -216,15 +218,19 @@ void WriteMemory(word address, byte data){
 	}
     else if(0xFF04 == address){
         z80.m_Rom[0xFF04] = 0;
+		z80.m_DividerRegister = 0;
     }
-	else if (TMC == address){
-		byte currentfreq = GetClockFreq();
-		z80.m_CartridgeMemory[TMC] = data;
-		byte newfreq = GetClockFreq();
-
-		if (currentfreq != newfreq){
-			SetClockFreq();
-		}
+	else if(0xFF07 == address){
+		data |= 0xF8;
+		z80.m_Rom[address] = data;
+	}
+	else if(0xFF0F == address){
+		data |= 0xE0;
+		z80.m_Rom[address] = data;
+	}
+	else if(0xFF41 == address){
+		data |= 0x80;
+		z80.m_Rom[address] = data;
 	}
     else if(0xFF44 == address){
         z80.m_Rom[0xFF44] = 0;
@@ -246,15 +252,21 @@ void WriteMemory(word address, byte data){
 
 byte ReadMemory(word address){
     
+	//printf("Write(0x%08x)\n", address);
 	if(address < 0x0100){
 		return z80.m_Rom[address];
 	}
 	else if((address>=0x4000) && (address<=0x7FFF)){
 
-        //on enleve la valeur d'une bank pour récuperer la valeur d'origine
-        word newAddress = address - 0x4000;
-        //pour recuperer les données de la bonne BANK on multiply le numero de la BANK par 0x4000 ce qui nous positionne sur la bonne BANK et on ajoute la nouvelle adresse pour être sur la bonne donnée
-        return z80.m_CartridgeMemory[newAddress + ((z80.m_CurrentROMBank)*0x4000)];
+		if(z80.m_MBC1 || z80.m_MBC2){
+			//on enleve la valeur d'une bank pour récuperer la valeur d'origine
+			word newAddress = address - 0x4000;
+			//pour recuperer les données de la bonne BANK on multiply le numero de la BANK par 0x4000 ce qui nous positionne sur la bonne BANK et on ajoute la nouvelle adresse pour être sur la bonne donnée
+			return z80.m_CartridgeMemory[newAddress + ((z80.m_CurrentROMBank)*0x4000)];
+		}
+		else{
+			return z80.m_Rom[address];
+		}
     }
     else if((address>=0xA000) && (address<=0xBFFF)){
         word newAddress = address - 0xA000;
@@ -276,17 +288,11 @@ void HandleBanking(word address, byte data){
 			
             DoRAMBankEnable(address,data);
         }
-		else{
-			z80.m_Rom[address] = data;
-		}
     }
     else if((address>=0x2000) && (address<0x4000)){
         if(z80.m_MBC1 || z80.m_MBC2){
             DoChangeLoROMBank(data);
         }
-		else{
-			z80.m_Rom[address] = data;
-		}
     }
     else if((address>=0x4000) && (address<0x6000)){
         if(z80.m_MBC1){
@@ -299,17 +305,11 @@ void HandleBanking(word address, byte data){
                 DoRAMBankChange(data);
             }
         }
-		else{
-			z80.m_Rom[address] = data;
-		}
     }
     else if((address>=0x6000) && (address<0x8000)){
         if(z80.m_MBC1){
             DoChangeROMRAMMode(data);
         }
-		else{
-			z80.m_Rom[address] = data;
-		}
     }
 
 }
@@ -412,7 +412,6 @@ void UpdateTimers(int cycles){
 		if(z80.m_TimerCounter >= z80.m_TimerSpeed){
 			z80.m_Rom[0xFF05]++;
 			z80.m_TimerCounter -= z80.m_TimerSpeed;
-			
 			if(z80.m_Rom[0xFF05] == 0){
 				z80.m_Rom[0xFF0F] |= 0x04;
 				z80.m_Rom[0xFF05] = z80.m_Rom[0xFF06];
@@ -440,7 +439,7 @@ void SetClockFreq(){
         case 1:
             z80.m_TimerSpeed = 16;
             break;
-        case 2:
+        case 2: 
             z80.m_TimerSpeed = 64;
             break;
         case 3:
@@ -450,6 +449,10 @@ void SetClockFreq(){
             printf("frequency has not been changed");
             break;
     }
+	
+	//z80.m_Rom[TMC] = 0x00;
+	
+	//printf("freq %d", z80.m_TimerSpeed);
 }
 
 void DoDividerRegister(int cycles){
@@ -472,46 +475,46 @@ void DoInterupts(){
     else if(z80.m_InteruptMaster){
         //Vblank Interupt
 		if((z80.m_Rom[0xFFFF] & 0x1) && (z80.m_Rom[0xFF0F] & 0x1)){
-			printf("Vblank int");
+			printf("vblank");
 			z80.m_InteruptMaster = false;
 			z80.m_Halted = false;
 			z80.m_Rom[0xFF0F] &= ~0x01;
-			z80.m_StackPointer.reg -= 2;
-			WriteU16(z80.m_StackPointer.reg, z80.m_ProgramCounter);
+			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x40;
-			loopCounter += 36;
 		}
 		//LCD Status Interupt
 		if((z80.m_Rom[0xFFFF] & 0x02) && (z80.m_Rom[0xFF0F] & 0x02)){
-			printf("LCD int");
+			printf("status");
 			z80.m_InteruptMaster = false;
 			z80.m_Halted = false;
 			z80.m_Rom[0xFF0F] &= ~0x02;
-			z80.m_StackPointer.reg -= 2;
-			WriteU16(z80.m_StackPointer.reg, z80.m_ProgramCounter);
+			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x48;
-			loopCounter += 36;
 		}
 		//Timer Overflow Interupt
 		if((z80.m_Rom[0xFFFF] & 0x04) && (z80.m_Rom[0xFF0F] & 0x04)){
-			printf("Timer int");
+			printf("overflow intr");
 			z80.m_InteruptMaster = false;
 			z80.m_Halted = false;
 			z80.m_Rom[0xFF0F] &= ~0x04;
-			z80.m_StackPointer.reg -= 2;
-			WriteU16(z80.m_StackPointer.reg, z80.m_ProgramCounter);
+			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x50;
-			loopCounter += 36;
+		}
+		if((z80.m_Rom[0xFFFF] & 0x08) && (z80.m_Rom[0xFF0F] & 0x08)){
+			z80.m_InteruptMaster = false;
+			z80.m_Halted = false;
+			z80.m_Rom[0xFF0F] &= ~0x08;
+			PushWordOntoStack(z80.m_ProgramCounter);
+			z80.m_ProgramCounter = 0x58;
 		}
 		//Joypad Interupt
 		if((z80.m_Rom[0xFFFF] & 0x10) && (z80.m_Rom[0xFF0F] & 0x10)){
+			printf("joypad");
 			z80.m_InteruptMaster = false;
 			z80.m_Halted = false;
 			z80.m_Rom[0xFF0F] &= ~0x10;
-			z80.m_StackPointer.reg -= 2;
-			WriteU16(z80.m_StackPointer.reg, z80.m_ProgramCounter);
+			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x60;
-			loopCounter += 36;
 		}
     }
 	else if((z80.m_Rom[0xFF0F] & z80.m_Rom[0xFFFF] & 0x1F) && (!z80.m_SkipInstruction)){
@@ -528,7 +531,7 @@ void UpdateGraphics(int cycles){
     SetLCDStatus();
 
     if(IsLCDEnabled()){
-		//printf("lcd enabled");
+		
         z80.m_ScanlineCounter -= cycles;
     }
     else{
@@ -960,7 +963,7 @@ void ExecuteNextOpcode(){
     byte opcode = ReadMemory(z80.m_ProgramCounter);
 	
 	//printf("PC : 0x%08x\n", z80.m_ProgramCounter);
-	//rintf("OPCODE : 0x%08x\n", opcode);
+	//printf("OPCODE : 0x%08x\n", opcode);
 	
 	if(!z80.m_Halted){
 		z80.m_ProgramCounter++;

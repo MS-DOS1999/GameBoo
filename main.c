@@ -7,6 +7,7 @@
 
 int loopCounter = 0;
 int cyclesTime = 0;
+bool quit = false ;
 
 #include "z80.c"
 
@@ -28,6 +29,9 @@ SDL_Surface *square[4];
 
 
 int main(int argc, char* argv[]){
+
+	//freopen( "CON", "w", stdout );
+	//freopen( "CON", "w", stderr );
 
     char filePath[200];
     printf("Indiquez le 'chemin absolu/absolute path' de votre rom :  ");
@@ -70,28 +74,19 @@ int main(int argc, char* argv[]){
 	
 	
     if(getReady){
-		bool quit = false ;
 		SDL_Event event;
-		float fps = 59.73;
-		float interval = 1000;
-		interval /= fps;
 		while(!quit){
 			while(SDL_PollEvent(&event)){
 				HandleInput(event);
-
-				if(event.type == SDL_QUIT){
-					quit = true;
-				}
 			}
 			Update();
-			SDL_Delay(interval);
 		}
 		SDL_Quit();
     }
-//on redirige le stdout de la SDL pour l'afficher sur la console ;) //
-			freopen( "CON", "w", stdout );
-			freopen( "CON", "w", stderr );
-			//HELL YEAH//
+	
+	freopen( "CON", "w", stdout );
+	freopen( "CON", "w", stderr );
+	
     return EXIT_SUCCESS;
 }
 
@@ -106,6 +101,7 @@ void Update(){
         UpdateGraphics(cyclesTime);
         DoInterupts();
     }
+	//printf("A : 0x%08x\n", z80.m_RegisterAF.hi);
     RenderScreen();
 }
 
@@ -244,6 +240,7 @@ void HandleInput(SDL_Event& event){
 			case SDLK_LEFT : key = 1 ; break ;
 			case SDLK_UP : key = 2 ; break ;
 			case SDLK_DOWN : key = 3 ; break ;
+			case SDLK_ESCAPE : quit = true ; break ;
 		}
 		if (key != -1){
 			KeyPressed(key) ;
@@ -260,6 +257,7 @@ void HandleInput(SDL_Event& event){
 			case SDLK_LEFT : key = 1 ; break ;
 			case SDLK_UP : key = 2 ; break ;
 			case SDLK_DOWN : key = 3 ; break ;
+			case SDLK_ESCAPE : quit = true ; break ;
 		}
 		if (key != -1){
 			KeyReleased(key) ;
