@@ -65,10 +65,12 @@ int main(int argc, char* argv[]){
     if(z80.m_MBC1){
         printf("ROM PCB: MBC1\n\n");
     }
-
-    if(z80.m_MBC2){
-        printf("ROM PCB: MBC2");
+    else if(z80.m_MBC2){
+        printf("ROM PCB: MBC2\n\n");
     }
+	else{
+		printf("ROM PCB: NO ROM\n\n");
+	}
 
 	
 	
@@ -84,8 +86,8 @@ int main(int argc, char* argv[]){
 		SDL_Quit();
     }
 	
-	freopen( "CON", "w", stdout );
-	freopen( "CON", "w", stderr );
+	//freopen( "CON", "w", stdout );
+	//freopen( "CON", "w", stderr );
 	
     return EXIT_SUCCESS;
 }
@@ -101,7 +103,6 @@ void Update(){
         UpdateGraphics(cyclesTime);
         DoInterupts();
     }
-	//printf("A : 0x%08x\n", z80.m_RegisterAF.hi);
     RenderScreen();
 }
 

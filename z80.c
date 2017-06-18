@@ -475,30 +475,33 @@ void DoInterupts(){
     else if(z80.m_InteruptMaster){
         //Vblank Interupt
 		if((z80.m_Rom[0xFFFF] & 0x1) && (z80.m_Rom[0xFF0F] & 0x1)){
-			printf("vblank");
+			//printf("vblank");
 			z80.m_InteruptMaster = false;
 			z80.m_Halted = false;
 			z80.m_Rom[0xFF0F] &= ~0x01;
 			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x40;
+			loopCounter += 36;
 		}
 		//LCD Status Interupt
 		if((z80.m_Rom[0xFFFF] & 0x02) && (z80.m_Rom[0xFF0F] & 0x02)){
-			printf("status");
+			//printf("status");
 			z80.m_InteruptMaster = false;
 			z80.m_Halted = false;
 			z80.m_Rom[0xFF0F] &= ~0x02;
 			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x48;
+			loopCounter += 36;
 		}
 		//Timer Overflow Interupt
 		if((z80.m_Rom[0xFFFF] & 0x04) && (z80.m_Rom[0xFF0F] & 0x04)){
-			printf("overflow intr");
+			//printf("overflow intr");
 			z80.m_InteruptMaster = false;
 			z80.m_Halted = false;
 			z80.m_Rom[0xFF0F] &= ~0x04;
 			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x50;
+			loopCounter += 36;
 		}
 		if((z80.m_Rom[0xFFFF] & 0x08) && (z80.m_Rom[0xFF0F] & 0x08)){
 			z80.m_InteruptMaster = false;
@@ -506,15 +509,17 @@ void DoInterupts(){
 			z80.m_Rom[0xFF0F] &= ~0x08;
 			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x58;
+			loopCounter += 36;
 		}
 		//Joypad Interupt
 		if((z80.m_Rom[0xFFFF] & 0x10) && (z80.m_Rom[0xFF0F] & 0x10)){
-			printf("joypad");
+			//printf("joypad");
 			z80.m_InteruptMaster = false;
 			z80.m_Halted = false;
 			z80.m_Rom[0xFF0F] &= ~0x10;
 			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x60;
+			loopCounter += 36;
 		}
     }
 	else if((z80.m_Rom[0xFF0F] & z80.m_Rom[0xFFFF] & 0x1F) && (!z80.m_SkipInstruction)){
@@ -964,6 +969,8 @@ void ExecuteNextOpcode(){
 	
 	//printf("PC : 0x%08x\n", z80.m_ProgramCounter);
 	//printf("OPCODE : 0x%08x\n", opcode);
+	//printf("FF85 : 0x%08x\n", z80.m_Rom[0xFF85]);
+	//printf("halt : 0x%08x\n", z80.m_Halted);
 	
 	if(!z80.m_Halted){
 		z80.m_ProgramCounter++;
@@ -1873,7 +1880,7 @@ void ExecuteOpcode(byte opcode){
 			CPU_RETURN(true, FLAG_C, false); break;
 		}
 		case 0xD1:{
-			loopCounter = 12;
+			cyclesTime = 12;
 			z80.m_RegisterDE.reg = PopWordOffStack(); loopCounter+=12 ;break;
 		}
 		case 0xD2:{
