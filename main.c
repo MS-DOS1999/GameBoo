@@ -7,7 +7,12 @@
 
 int loopCounter = 0;
 int cyclesTime = 0;
-bool quit = false ;
+bool quit = false;
+int total = 0;
+int timer = 0;
+int current = 0;
+int counter = 0;
+bool first = true;
 
 #include "z80.c"
 
@@ -19,6 +24,7 @@ void drawPixel(PIXEL);
 void RenderScreen();
 bool LoadGame(char *);
 void HandleInput(SDL_Event&);
+void FPSChecking();
 void Update();
 
 
@@ -30,8 +36,8 @@ SDL_Surface *square[4];
 
 int main(int argc, char* argv[]){
 
-	//freopen( "CON", "w", stdout );
-	//freopen( "CON", "w", stderr );
+	freopen( "CON", "w", stdout );
+	freopen( "CON", "w", stderr );
 
     char filePath[200];
     printf("Indiquez le 'chemin absolu/absolute path' de votre rom :  ");
@@ -77,11 +83,26 @@ int main(int argc, char* argv[]){
 	
     if(getReady){
 		SDL_Event event;
+		float fps = 59.73;
+		float interval = 1000;
+		interval /= fps;
+		
+		unsigned int time2 = SDL_GetTicks();
+		
 		while(!quit){
 			while(SDL_PollEvent(&event)){
 				HandleInput(event);
 			}
-			Update();
+			
+			unsigned int current = SDL_GetTicks();
+			
+			if((time2 + interval) < current){
+				FPSChecking();
+				Update();
+				time2 = current;
+			}
+			
+			
 		}
 		SDL_Quit();
     }
@@ -104,6 +125,21 @@ void Update(){
         DoInterupts();
     }
     RenderScreen();
+}
+
+void FPSChecking(){
+	if (first){
+		first = false;
+		timer = SDL_GetTicks();
+	}
+
+	counter++;
+	current = SDL_GetTicks();
+	if ((timer + 1000) < current){
+		timer = current ;
+		total = counter ;
+		counter = 0 ;
+	}
 }
 
 bool LoadGame(char *gameName){

@@ -481,7 +481,6 @@ void DoInterupts(){
 			z80.m_Rom[0xFF0F] &= ~0x01;
 			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x40;
-			loopCounter += 36;
 		}
 		//LCD Status Interupt
 		if((z80.m_Rom[0xFFFF] & 0x02) && (z80.m_Rom[0xFF0F] & 0x02)){
@@ -491,7 +490,6 @@ void DoInterupts(){
 			z80.m_Rom[0xFF0F] &= ~0x02;
 			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x48;
-			loopCounter += 36;
 		}
 		//Timer Overflow Interupt
 		if((z80.m_Rom[0xFFFF] & 0x04) && (z80.m_Rom[0xFF0F] & 0x04)){
@@ -501,7 +499,6 @@ void DoInterupts(){
 			z80.m_Rom[0xFF0F] &= ~0x04;
 			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x50;
-			loopCounter += 36;
 		}
 		if((z80.m_Rom[0xFFFF] & 0x08) && (z80.m_Rom[0xFF0F] & 0x08)){
 			z80.m_InteruptMaster = false;
@@ -509,7 +506,6 @@ void DoInterupts(){
 			z80.m_Rom[0xFF0F] &= ~0x08;
 			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x58;
-			loopCounter += 36;
 		}
 		//Joypad Interupt
 		if((z80.m_Rom[0xFFFF] & 0x10) && (z80.m_Rom[0xFF0F] & 0x10)){
@@ -519,7 +515,6 @@ void DoInterupts(){
 			z80.m_Rom[0xFF0F] &= ~0x10;
 			PushWordOntoStack(z80.m_ProgramCounter);
 			z80.m_ProgramCounter = 0x60;
-			loopCounter += 36;
 		}
     }
 	else if((z80.m_Rom[0xFF0F] & z80.m_Rom[0xFFFF] & 0x1F) && (!z80.m_SkipInstruction)){
