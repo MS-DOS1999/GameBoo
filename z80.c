@@ -229,8 +229,10 @@ void WriteMemory(word address, byte data){
 		z80.m_Rom[address] = data;
 	}
 	else if(0xFF41 == address){
-		data |= 0x80;
-		z80.m_Rom[address] = data;
+		byte readOnlyBits = (z80.m_Rom[address] & 0x7);
+
+		z80.m_Rom[address] = (data & ~0x7);
+		z80.m_Rom[address] |= readOnlyBits;
 	}
     else if(0xFF44 == address){
         z80.m_Rom[0xFF44] = 0;
@@ -905,6 +907,10 @@ void RenderSprites(byte control){
 
                 colorNum |= BitGetVal8(data1, colorBit);
 
+				if(colorNum == 0){
+                    continue;
+                }
+				
                 word colorAddressValueTemp = 0;
 
                 if(TestBit8(attributes, 4)){
@@ -918,10 +924,6 @@ void RenderSprites(byte control){
                 word colorAddress = colorAddressValueTemp;
 
                 COLOR col = GetColor(colorNum, colorAddress);
-
-                if(col == WHITE){
-                    continue;
-                }
 
                 int xPix = 0 - tilePixel;
 
@@ -964,7 +966,7 @@ void ExecuteNextOpcode(){
 	
 	//printf("PC : 0x%08x\n", z80.m_ProgramCounter);
 	//printf("OPCODE : 0x%08x\n", opcode);
-	//printf("FF85 : 0x%08x\n", z80.m_Rom[0xFF85]);
+	//printf("FF41 : 0x%08x\n", z80.m_Rom[0xFF41]);
 	//printf("halt : 0x%08x\n", z80.m_Halted);
 	
 	if(!z80.m_Halted){
