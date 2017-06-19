@@ -228,12 +228,11 @@ void WriteMemory(word address, byte data){
 		data |= 0xE0;
 		z80.m_Rom[address] = data;
 	}
-	else if(0xFF41 == address){
+	/*else if(0xFF41 == address){
 		byte readOnlyBits = (z80.m_Rom[address] & 0x7);
-
 		z80.m_Rom[address] = (data & ~0x7);
 		z80.m_Rom[address] |= readOnlyBits;
-	}
+	}*/
     else if(0xFF44 == address){
         z80.m_Rom[0xFF44] = 0;
     }
@@ -553,31 +552,35 @@ void UpdateGraphics(int cycles){
         }
         else if(currentline < 144){
             DrawScanLine();
-        }
+        } 
 
     }
 }
 
 void SetLCDStatus(){
+	
     byte status = ReadMemory(0xFF41);
     if(IsLCDEnabled() == false){
+		//printf("lcd disabled\n");
         z80.m_ScanlineCounter = 456;
         z80.m_Rom[0xFF44] = 0;
-        status &= 252;
-        status = BitSet8(status, 0);
+        status &= 0xFC;
+		status |= 0x00;
         WriteMemory(0xFF41, status);
         return;
     }
-
+	//printf("lcd enabled\n");
+	
     byte currentline = ReadMemory(0xFF44);
     byte currentmode = status & 0x3;
+	//printf("%d\n", currentmode);
     int mode = 0;
     bool reqInt = false;
 
     if(currentline >= 144){
         mode = 1;
-        status = BitSet8(status, 0);
-        status = BitReset8(status, 1);
+        status &= 0xFC;
+		status |= 0x01;
         reqInt = TestBit8(status, 4);
     }
     else{
@@ -585,20 +588,20 @@ void SetLCDStatus(){
         int mode3bound = mode2bound - 172;
         if(z80.m_ScanlineCounter >= mode2bound){
             mode = 2;
-            status = BitSet8(status, 1);
-            status = BitReset8(status, 0);
+            status &= 0xFC;
+			status |= 0x02;
             reqInt = TestBit8(status, 5);
         }
         else if(z80.m_ScanlineCounter >= mode3bound){
             mode = 3;
-            status = BitSet8(status, 1);
-            status = BitSet8(status, 0);
+            status &= 0xFC;
+			status |= 0x03;
 
         }
         else{
             mode = 0;
-            status = BitReset8(status, 1);
-            status = BitReset8(status, 0);
+            status &= 0xFC;
+			status |= 0x00;
             reqInt = TestBit8(status, 3);
         }
     }
@@ -610,14 +613,15 @@ void SetLCDStatus(){
     byte ly = ReadMemory(0xFF44);
 
     if(ly == ReadMemory(0xFF45)){
-        status = BitSet8(status, 2);
+		status |= 0x04;
         if(TestBit8(status, 6)){
             z80.m_Rom[0xFF0F] |= 0x02;
         }
     }
     else{
-        status = BitReset8(status, 2);
+        status &= 0xFB;
     }
+	
     WriteMemory(0xFF41, status);
 
 }
