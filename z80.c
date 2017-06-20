@@ -75,28 +75,6 @@ void DetectMapper(){
         default : break ;
     }
 	
-	int numRamBanks = 0;
-	switch (ReadMemory(0x149)){
-		case 0: numRamBanks = 0 ;break ;
-		case 1: numRamBanks = 1 ;break ;
-		case 2: numRamBanks = 1 ;break ;
-		case 3: numRamBanks = 4 ;break ;
-		case 4: numRamBanks = 16 ;break ;
-	}
-
-	CreateRamBanks(numRamBanks);
-}
-
-void CreateRamBanks(int numBanks){
-	for (int i = 0; i < 17; i++){
-		byte ram[0x2000];
-		memset(ram, 0, sizeof(ram)) ;
-		z80.m_RAMBanks.push_back(ram) ;
-	}
-
-	for (int i = 0 ; i < 0x2000; i++){
-		z80.m_RAMBanks[0][i] = z80.m_Rom[0xA000+i];
-	}
 }
 
 //INIT//
@@ -201,8 +179,9 @@ void WriteMemory(word address, byte data){
     else if((address>=0xA000)&&(address<0xC000)){
         if(z80.m_EnableRAM){
 			if(z80.m_MBC1){
-				word newAddress = address - 0xA000 ;
-				z80.m_RAMBanks.at(z80.m_CurrentRAMBank)[newAddress] = data;
+				word newAddress = address - 0xA000;
+				z80.m_RAMBanks[newAddress + (z80.m_CurrentRAMBank*0x2000)] = data;
+				writeRAM = true;
 			}
         }
     }
@@ -228,11 +207,6 @@ void WriteMemory(word address, byte data){
 		data |= 0xE0;
 		z80.m_Rom[address] = data;
 	}
-	/*else if(0xFF41 == address){
-		byte readOnlyBits = (z80.m_Rom[address] & 0x7);
-		z80.m_Rom[address] = (data & ~0x7);
-		z80.m_Rom[address] |= readOnlyBits;
-	}*/
     else if(0xFF44 == address){
         z80.m_Rom[0xFF44] = 0;
     }
@@ -271,7 +245,7 @@ byte ReadMemory(word address){
     }
     else if((address>=0xA000) && (address<=0xBFFF)){
         word newAddress = address - 0xA000;
-        return z80.m_RAMBanks.at(z80.m_CurrentRAMBank)[newAddress];
+        return z80.m_RAMBanks[newAddress + (z80.m_CurrentRAMBank * 0x2000)];
     }
 	else if (0xFF00 == address){
 		return GetJoypadState();
@@ -390,11 +364,6 @@ void DoChangeROMRAMMode(byte data){
         z80.m_CurrentRAMBank = 0;
     }
 	
-}
-
-void WriteU16(word address, word data){
-	WriteMemory(address, (data & 0xFF));
-	WriteMemory((address + 1), (data >> 8));
 }
 //MEMORY READ/WRITE//
 

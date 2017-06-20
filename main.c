@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <vector>
+#include <unistd.h>
 #include <SDL/SDL.h>
 
 int loopCounter = 0;
@@ -13,6 +13,8 @@ int timer = 0;
 int current = 0;
 int counter = 0;
 bool first = true;
+char saveName[200];
+bool writeRAM = false;
 
 #include "z80.c"
 
@@ -43,8 +45,6 @@ int main(int argc, char* argv[]){
     printf("Indiquez le 'chemin absolu/absolute path' de votre rom :  ");
     scanf("%[^\n]", filePath);
     printf("Scanf: OK\n\n");
-
-
 
     initSDL();
 
@@ -77,8 +77,19 @@ int main(int argc, char* argv[]){
 	else{
 		printf("ROM PCB: NO ROM\n\n");
 	}
-
 	
+	//SaveFile Name
+	strcpy(saveName, filePath);
+	char *pch;
+	pch = strstr(saveName,".gb");
+	strncpy(pch,".sav",4);
+	
+	if(access(saveName, F_OK) != -1){
+		printf("save file found");
+		FILE *ifp = fopen(saveName, "rb");
+		fread(z80.m_RAMBanks, sizeof(byte), sizeof(z80.m_RAMBanks), ifp);
+		fclose(ifp);
+	}
 	
 	
     if(getReady){
@@ -125,6 +136,13 @@ void Update(){
         DoInterupts();
     }
     RenderScreen();
+	//make save ?
+	if(writeRAM){
+		FILE *f = fopen(saveName, "wb");
+		fwrite(z80.m_RAMBanks, sizeof(byte), sizeof(z80.m_RAMBanks), f);
+		fclose(f);
+		writeRAM = false;
+	}
 }
 
 void FPSChecking(){
