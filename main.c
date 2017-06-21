@@ -17,6 +17,10 @@ char saveName[200];
 bool writeRAM = false;
 
 #include "z80.c"
+#include "NOROM.c"
+#include "MBC1.c"
+#include "MBC2.c"
+#include "MBC3.c"
 
 void initSDL();
 void initScreen();
@@ -68,15 +72,20 @@ int main(int argc, char* argv[]){
     //on definie le pcb de la rom après son chargement//
     DetectMapper();
 
-    if(z80.m_MBC1){
+	
+	if(z80.m_NOROM){
+		printf("ROM PCB: NO ROM\n\n");
+	}
+    else if(z80.m_MBC1){
         printf("ROM PCB: MBC1\n\n");
     }
     else if(z80.m_MBC2){
         printf("ROM PCB: MBC2\n\n");
     }
-	else{
-		printf("ROM PCB: NO ROM\n\n");
-	}
+	else if(z80.m_MBC3){
+        printf("ROM PCB: MBC3\n\n");
+    }
+	
 	
 	//SaveFile Name
 	strcpy(saveName, filePath);
@@ -84,11 +93,14 @@ int main(int argc, char* argv[]){
 	pch = strstr(saveName,".gb");
 	strncpy(pch,".sav",4);
 	
-	if(access(saveName, F_OK) != -1){
-		printf("save file found");
-		FILE *ifp = fopen(saveName, "rb");
-		fread(z80.m_RAMBanks, sizeof(byte), sizeof(z80.m_RAMBanks), ifp);
-		fclose(ifp);
+	
+	if(z80.m_ActiveBATTERY){
+		if(access(saveName, F_OK) != -1){
+			printf("save file found");
+			FILE *ifp = fopen(saveName, "rb");
+			fread(z80.m_RAMBanks, sizeof(byte), sizeof(z80.m_RAMBanks), ifp);
+			fclose(ifp);
+		}
 	}
 	
 	

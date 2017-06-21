@@ -1,0 +1,10 @@
+GameBoy----------------Computer
+
+Up---------------------Arrow Up
+Down-----------------Arrow Down
+Left-----------------Arrow Left
+Right---------------Arrow Right
+A-----------------------------Q
+B-----------------------------S
+Select----------------Space Bar
+Start---------------------Enter

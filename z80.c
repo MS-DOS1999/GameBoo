@@ -1,4 +1,5 @@
 #include "z80.h"
+#include "Mapper.h"
 #include "BiosDMG.h"
 #include "bitUtils.c"
 
@@ -62,19 +63,31 @@ void initZ80(){
 
 void DetectMapper(){
 
+	z80.m_ActiveRAM = false;
+	z80.m_ActiveBATTERY = false;
+	z80.m_NOROM = false;
     z80.m_MBC1 = false;
     z80.m_MBC2 = false;
+	z80.m_MBC3 = false;
 
     switch (z80.m_CartridgeMemory[0x147]){
 		
-        case 1 : z80.m_MBC1 = true ; break ;
-        case 2 : z80.m_MBC1 = true ; break ;
-        case 3 : z80.m_MBC1 = true ; break ;
-        case 5 : z80.m_MBC2 = true ; break ;
-        case 6 : z80.m_MBC2 = true ; break ;
+		case 0x0 : z80.m_NOROM = true ; break ;
+        case 0x1 : z80.m_MBC1 = true ; break ;
+        case 0x2 : z80.m_MBC1 = true ; z80.m_ActiveRAM = true ; break ;
+        case 0x3 : z80.m_MBC1 = true ; z80.m_ActiveRAM = true ; z80.m_ActiveBATTERY = true; break ;
+        case 0x5 : z80.m_MBC2 = true ; break ;
+        case 0x6 : z80.m_MBC2 = true ; z80.m_ActiveBATTERY = true; break ;
+		case 0x8 : z80.m_NOROM = true ; z80.m_ActiveRAM = true ; break ;
+		case 0x9 : z80.m_NOROM = true ; z80.m_ActiveRAM = true ; z80.m_ActiveBATTERY = true; break ;
+		case 0xF : z80.m_MBC3 = true ; z80.m_ActiveBATTERY = true; rtc = true; break ;
+		case 0x10 : z80.m_MBC3 = true ; z80.m_ActiveRAM = true ; z80.m_ActiveBATTERY = true; rtc = true; break ;
+		case 0x11 : z80.m_MBC3 = true ; break ;
+		case 0x12 : z80.m_MBC3 = true ; z80.m_ActiveRAM = true ; break ;
+		case 0x13 : z80.m_MBC3 = true ; z80.m_ActiveRAM = true ; z80.m_ActiveBATTERY = true; break ;
         default : break ;
     }
-	
+
 }
 
 //INIT//
@@ -167,203 +180,40 @@ word PopWordOffStack(){
 
 void WriteMemory(word address, byte data){
 	
-	//printf("Write(0x%08x)\n", address);
+	if(z80.m_NOROM){
+		Write_NOROM(address, data);
+	}
+	else if(z80.m_MBC1){
+		Write_MBC1(address, data);
+	}
+	else if(z80.m_MBC2){
+		Write_MBC2(address, data);
+	}
+	else if(z80.m_MBC3){
+		Write_MBC3(address, data);
+	}
 	
-	if(address < 0x8000){
-        HandleBanking(address, data);
-    }
-	else if((address>=0x8000) && (address <0xA000)){
-		
-		z80.m_Rom[address] = data;
-	}
-    else if((address>=0xA000)&&(address<0xC000)){
-        if(z80.m_EnableRAM){
-			if(z80.m_MBC1){
-				word newAddress = address - 0xA000;
-				z80.m_RAMBanks[newAddress + (z80.m_CurrentRAMBank*0x2000)] = data;
-				writeRAM = true;
-			}
-        }
-    }
-	else if ( (address >= 0xC000) && (address <= 0xDFFF) ){
-		z80.m_Rom[address] = data ;
-	}
-	else if ( (address >= 0xE000) && (address <= 0xFDFF) ){
-		z80.m_Rom[address] = data ;
-		z80.m_Rom[address-0x2000] = data ; // echo data into ram address
-	}
- 	else if ((address >= 0xFEA0) && (address <= 0xFEFF)){
- 	//restricted area
-	}
-    else if(0xFF04 == address){
-        z80.m_Rom[0xFF04] = 0;
-		z80.m_DividerRegister = 0;
-    }
-	else if(0xFF07 == address){
-		data |= 0xF8;
-		z80.m_Rom[address] = data;
-	}
-	else if(0xFF0F == address){
-		data |= 0xE0;
-		z80.m_Rom[address] = data;
-	}
-    else if(0xFF44 == address){
-        z80.m_Rom[0xFF44] = 0;
-    }
-	else if (0xFF45 == address){
-		z80.m_Rom[address] = data;
-	}
-    else if(0xFF46 == address){
-        DoDMATransfer(data);
-    }
-	else if ((address >= 0xFF4C) && (address <= 0xFF7F)){
- 	//restricted area
-	}
-	else{
-		z80.m_Rom[address] = data ;
-	}
 }
 
 
 byte ReadMemory(word address){
     
-	//printf("Write(0x%08x)\n", address);
-	if(address < 0x0100){
-		return z80.m_Rom[address];
+	if(z80.m_NOROM){
+		return Read_NOROM(address);
 	}
-	else if((address>=0x4000) && (address<=0x7FFF)){
-
-		if(z80.m_MBC1 || z80.m_MBC2){
-			//on enleve la valeur d'une bank pour récuperer la valeur d'origine
-			word newAddress = address - 0x4000;
-			//pour recuperer les données de la bonne BANK on multiply le numero de la BANK par 0x4000 ce qui nous positionne sur la bonne BANK et on ajoute la nouvelle adresse pour être sur la bonne donnée
-			return z80.m_CartridgeMemory[newAddress + ((z80.m_CurrentROMBank)*0x4000)];
-		}
-		else{
-			return z80.m_Rom[address];
-		}
-    }
-    else if((address>=0xA000) && (address<=0xBFFF)){
-        word newAddress = address - 0xA000;
-        return z80.m_RAMBanks[newAddress + (z80.m_CurrentRAMBank * 0x2000)];
-    }
-	else if (0xFF00 == address){
-		return GetJoypadState();
+	else if(z80.m_MBC1){
+		return Read_MBC1(address);
+	}
+	else if(z80.m_MBC2){
+		return Read_MBC2(address);
+	}
+	else if(z80.m_MBC3){
+		return Read_MBC3(address);
 	}
 	else{
-		return z80.m_Rom[address];
+		return 0;
 	}
 
-}
-
-void HandleBanking(word address, byte data){
-
-    if (address < 0x2000){
-        if (z80.m_MBC1 || z80.m_MBC2){
-			
-            DoRAMBankEnable(address,data);
-        }
-    }
-    else if((address>=0x2000) && (address<0x4000)){
-        if(z80.m_MBC1 || z80.m_MBC2){
-            DoChangeLoROMBank(data);
-        }
-    }
-    else if((address>=0x4000) && (address<0x6000)){
-        if(z80.m_MBC1){
-            if(z80.m_RomBanking){
-				
-                DoChangeHiROMBank(data);
-            }
-            else{
-				
-                DoRAMBankChange(data);
-            }
-        }
-    }
-    else if((address>=0x6000) && (address<0x8000)){
-        if(z80.m_MBC1){
-            DoChangeROMRAMMode(data);
-        }
-    }
-
-}
-
-void DoRAMBankEnable(word address, byte data){
-	
-		if (z80.m_MBC1){
-            if ((data & 0xF) == 0xA){
-                z80.m_EnableRAM = true ;
-			}
-            else if (data == 0x0){
-                z80.m_EnableRAM = false ;
-			}
-	    }
-	    else if (z80.m_MBC2){
-			if (false == TestBit16(address,8)){
-				if ((data & 0xF) == 0xA){
-					z80.m_EnableRAM = true ;
-				}
-				else if (data == 0x0){
-					z80.m_EnableRAM = false ;
-				}
-			}
-	    }
-}
-
-void DoChangeLoROMBank(byte data){
-		if (z80.m_MBC1){
-			if (data == 0x00){
-				data++;
-			}
-
-			data &= 31;
-
-			z80.m_CurrentROMBank &= 224;
-
-			z80.m_CurrentROMBank |= data;
-
-		}
-		else if (z80.m_MBC2){
-            data &= 0xF ;
-            z80.m_CurrentROMBank = data ;
-		}
-}
-
-void DoChangeHiROMBank(byte data){
-    
-	z80.m_CurrentRAMBank = 0;
-	
-	data &= 3;
-	data <<=5;
-	
-	if((z80.m_CurrentROMBank & 31) == 0){
-		data++;
-	}
-	
-	z80.m_CurrentROMBank &= 31;
-	
-	z80.m_CurrentROMBank |= data;
-
-}
-
-void DoRAMBankChange(byte data){
-    z80.m_CurrentRAMBank = data & 0x3;
-}
-
-void DoChangeROMRAMMode(byte data){
-    byte newData = data & 0x1;
-    if(newData == 0){
-        z80.m_RomBanking = true;
-    }
-    else{
-        z80.m_RomBanking = false;
-    }
-
-    if(!z80.m_RomBanking){
-        z80.m_CurrentRAMBank = 0;
-    }
-	
 }
 //MEMORY READ/WRITE//
 

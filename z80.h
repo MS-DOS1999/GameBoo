@@ -53,8 +53,14 @@ typedef struct{
   
   byte m_JoypadState;
 
+  
+  bool m_ActiveRAM;
+  bool m_ActiveBATTERY;
+  bool m_NOROM;
   bool m_MBC1;
   bool m_MBC2;
+  bool m_MBC3;
+  
 
   byte m_CurrentROMBank;
   byte m_CurrentRAMBank;
@@ -92,12 +98,6 @@ void KeyReleased(int);
 byte GetJoypadState();
 void WriteMemory(word, byte);
 byte ReadMemory(word);
-void HandleBanking(word, byte);
-void DoRAMBankEnable(word, byte);
-void DoChangeLoROMBank(byte);
-void DoChangeHiROMBank(byte);
-void DoRAMBankChange(byte);
-void DoChangeROMRAMMode(byte);
 void UpdateTimers(int);
 bool IsClockEnabled();
 byte GetClockFreq();
