@@ -1,1 +1,0 @@
-g++ -Wall -g main.c -o GameBoo.exe -lmingw32 -lSDLmain -lSDL -Wno-write-strings -Wno-switch

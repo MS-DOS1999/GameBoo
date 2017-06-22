@@ -758,6 +758,12 @@ void RenderSprites(byte control){
                 if ((scanline<0)||(scanline>143)||(pixel<0)||(pixel>159)){
                     continue ;
                 }
+				
+				if (TestBit8(attributes, 7) == 1){
+					if((z80.m_ScreenData[pixel][scanline].color != WHITE) || (z80.m_ScreenData[pixel][scanline].color != WHITE) || (z80.m_ScreenData[pixel][scanline].color != WHITE)){
+						continue ;
+					}
+				}
 
 
                 switch(col){
