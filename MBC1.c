@@ -57,9 +57,6 @@ void Write_MBC1(word address, byte data){
         if(z80.m_EnableRAM){
 			word newAddress = address - 0xA000;
 			z80.m_RAMBanks[newAddress + (z80.m_CurrentRAMBank*0x2000)] = data;
-			if(z80.m_ActiveBATTERY){
-				writeRAM = true;
-			}
         }
     }
 	else if ( (address >= 0xE000) && (address <= 0xFDFF) ){

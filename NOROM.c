@@ -8,9 +8,6 @@ void Write_NOROM(word address, byte data){
         if(z80.m_ActiveRAM){
 			word newAddress = address - 0xA000;
 			z80.m_RAMBanks[newAddress] = data;
-			if(z80.m_ActiveBATTERY){
-				writeRAM = true;
-			}
         }
     }
 	else if ( (address >= 0xE000) && (address <= 0xFDFF) ){

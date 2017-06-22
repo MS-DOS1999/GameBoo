@@ -40,7 +40,7 @@ typedef struct{
   PIXEL m_ScreenData[160][144];
 
   byte m_Rom[0x10000];
-  byte m_RAMBanks[0x8000];
+  byte m_RAMBanks[0x20000];
   bool m_RomBanking;
 
   Register m_RegisterAF;

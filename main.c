@@ -14,7 +14,6 @@ int current = 0;
 int counter = 0;
 bool first = true;
 char saveName[200];
-bool writeRAM = false;
 
 #include "z80.c"
 #include "NOROM.c"
@@ -86,6 +85,18 @@ int main(int argc, char* argv[]){
         printf("ROM PCB: MBC3\n\n");
     }
 	
+	switch (z80.m_CartridgeMemory[0x149]){
+		
+		case 0x0 : printf("RAM SIZE : NO RAM"); break ;
+        case 0x1 : printf("RAM SIZE : 2KB"); break ;
+        case 0x2 : printf("RAM SIZE : 8KB"); break ;
+        case 0x3 : printf("RAM SIZE : 32KB"); break ;
+        case 0x4 : printf("RAM SIZE : 128KB"); break ;
+        case 0x5 : printf("RAM SIZE : 64KB"); break ;
+    }
+	
+	
+	
 	
 	//SaveFile Name
 	strcpy(saveName, filePath);
@@ -115,6 +126,10 @@ int main(int argc, char* argv[]){
 		while(!quit){
 			while(SDL_PollEvent(&event)){
 				HandleInput(event);
+				
+				if (event.type == SDL_QUIT){
+					quit = true;
+				}
 			}
 			
 			unsigned int current = SDL_GetTicks();
@@ -127,6 +142,13 @@ int main(int argc, char* argv[]){
 			
 			
 		}
+		
+		if(z80.m_ActiveBATTERY){
+			FILE *f = fopen(saveName, "wb");
+			fwrite(z80.m_RAMBanks, sizeof(byte), sizeof(z80.m_RAMBanks), f);
+			fclose(f);
+		}
+		
 		SDL_Quit();
     }
 	
@@ -148,13 +170,6 @@ void Update(){
         DoInterupts();
     }
     RenderScreen();
-	//make save ?
-	if(writeRAM){
-		FILE *f = fopen(saveName, "wb");
-		fwrite(z80.m_RAMBanks, sizeof(byte), sizeof(z80.m_RAMBanks), f);
-		fclose(f);
-		writeRAM = false;
-	}
 }
 
 void FPSChecking(){

@@ -26,9 +26,6 @@ void Write_MBC2(word address, byte data){
 		if((address>=0xA000)&&(address<0xA200)){
 			word newAddress = address - 0xA000;
 			z80.m_RAMBanks[newAddress + (z80.m_CurrentRAMBank*0x2000)] = data;
-			if(z80.m_ActiveBATTERY){
-				writeRAM = true;
-			}
 		}
 		else{
 		//restricted area	

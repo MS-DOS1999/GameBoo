@@ -92,9 +92,6 @@ void Write_MBC3(word address, byte data){
         if((z80.m_EnableRAM) && (z80.m_CurrentRAMBank <= 3)){
 			word newAddress = address - 0xA000;
 			z80.m_RAMBanks[newAddress + (z80.m_CurrentRAMBank*0x2000)] = data;
-			if(z80.m_ActiveBATTERY){
-				writeRAM = true;
-			}
         }
 		else if((rtc_enabled) && (z80.m_CurrentRAMBank >= 8) && (z80.m_CurrentRAMBank <= 12)){
 			rtc_reg[z80.m_CurrentRAMBank - 8] = data;
