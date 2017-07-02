@@ -15,6 +15,12 @@ int counter = 0;
 bool first = true;
 char saveName[200];
 
+
+long int ScreenWidth = 160;
+long int ScreenHeight = 144;
+int pixelMultiplier = 1;
+
+
 #include "z80.c"
 #include "NOROM.c"
 #include "MBC1.c"
@@ -30,6 +36,9 @@ void RenderScreen();
 bool LoadGame(char *);
 void HandleInput(SDL_Event&);
 void FPSChecking();
+void GameBoyASCII();
+void TitleProg();
+void Menu();
 void Update();
 
 
@@ -37,13 +46,13 @@ SDL_Surface *screen = NULL;
 SDL_Surface *square[4];
 
 
-
-
 int main(int argc, char* argv[]){
 
 	freopen( "CON", "w", stdout );
 	freopen( "CON", "w", stderr );
-
+	
+	Menu();
+	
     char filePath[200];
     printf("Indiquez le 'chemin absolu/absolute path' de votre rom :  ");
     scanf("%[^\n]", filePath);
@@ -87,12 +96,12 @@ int main(int argc, char* argv[]){
 	
 	switch (z80.m_CartridgeMemory[0x149]){
 		
-		case 0x0 : printf("RAM SIZE : NO RAM"); break ;
-        case 0x1 : printf("RAM SIZE : 2KB"); break ;
-        case 0x2 : printf("RAM SIZE : 8KB"); break ;
-        case 0x3 : printf("RAM SIZE : 32KB"); break ;
-        case 0x4 : printf("RAM SIZE : 128KB"); break ;
-        case 0x5 : printf("RAM SIZE : 64KB"); break ;
+		case 0x0 : printf("RAM SIZE : NO RAM\n\n"); break ;
+        case 0x1 : printf("RAM SIZE : 2KB\n\n"); break ;
+        case 0x2 : printf("RAM SIZE : 8KB\n\n"); break ;
+        case 0x3 : printf("RAM SIZE : 32KB\n\n"); break ;
+        case 0x4 : printf("RAM SIZE : 128KB\n\n"); break ;
+        case 0x5 : printf("RAM SIZE : 64KB\n\n"); break ;
     }
 	
 	
@@ -172,6 +181,70 @@ void Update(){
     RenderScreen();
 }
 
+void Menu(){
+	
+	bool passMenu = false;
+	
+	while(!passMenu){
+		TitleProg();
+		GameBoyASCII();
+		
+		char menuSelect = '0';
+		printf("--------------------------------------------------------\n");
+		printf("|1|-Load Rom/Game   |2|-Change Screen Resolution   |3|-Config Joypad\n\n");
+		printf("Put 1,2 or 3 and press enter to choose one task : ");
+		menuSelect = getchar();
+		while(getchar() != '\n');
+		
+		while(menuSelect != '1' && menuSelect != '2' && menuSelect != '3'){
+			printf("\nWrong input. Retry: ");
+			menuSelect = getchar();
+			while(getchar() != '\n');
+		}
+		
+		if(menuSelect == '1'){
+			passMenu = true;
+		}
+		else if(menuSelect == '2'){
+			char screenRes = '0';
+			printf("--------------------------------------------------------\n");
+			printf("Resolution Config\n\n");
+			printf("|1|-160x144(original size)  |2|-320x288   |3|-480x432   |4|-640x576\n\n");
+			printf("Put 1,2,3 or 4 and press enter to choose one resolution : ");
+			screenRes = getchar();
+			while(getchar() != '\n');
+			
+			while(screenRes != '1' && screenRes != '2' && screenRes != '3' && screenRes != '4'){
+				printf("\nWrong input. Retry: ");
+				screenRes = getchar();
+				while(getchar() != '\n');
+			}
+			
+			if(screenRes == '1'){
+				ScreenWidth = 160;
+				ScreenHeight = 144;
+				pixelMultiplier = 1;
+			}
+			else if(screenRes == '2'){
+				ScreenWidth = 320;
+				ScreenHeight = 288;
+				pixelMultiplier = 2;
+			}
+			else if(screenRes == '3'){
+				ScreenWidth = 480;
+				ScreenHeight = 432;
+				pixelMultiplier = 3;
+			}
+			else if(screenRes == '4'){
+				ScreenWidth = 640;
+				ScreenHeight = 576;
+				pixelMultiplier = 4;
+			}
+			printf("\n\n");
+		}
+	}
+}
+
 void FPSChecking(){
 	if (first){
 		first = false;
@@ -241,7 +314,7 @@ void initScreen(){
     square[2] = NULL;
     square[3] = NULL;
     //SET SCREEN
-    screen = SDL_SetVideoMode(160, 144, 32, SDL_HWSURFACE); //initialiser ecran
+    screen = SDL_SetVideoMode(ScreenWidth, ScreenHeight, 32, SDL_HWSURFACE); //initialiser ecran
     SDL_WM_SetCaption("GameBoo by Julien MAGNIN", NULL);
 
     if(screen==NULL){
@@ -249,26 +322,26 @@ void initScreen(){
         exit(EXIT_FAILURE);
     }
     //PIXEL WHITE
-    square[0] = SDL_CreateRGBSurface(SDL_HWSURFACE, 1, 1, 32, 0, 0, 0, 0);
+    square[0] = SDL_CreateRGBSurface(SDL_HWSURFACE, pixelMultiplier, pixelMultiplier, 32, 0, 0, 0, 0);
     if(square[0]==NULL){
         fprintf(stderr,"Erreur lors du chargement de la surface %s",SDL_GetError());
     }
     SDL_FillRect(square[0], NULL, SDL_MapRGB(square[0]->format, 255, 255, 255));
     //PIXEL LIGHT_GREY
-    square[1] = SDL_CreateRGBSurface(SDL_HWSURFACE, 1, 1, 32, 0, 0, 0, 0);
+    square[1] = SDL_CreateRGBSurface(SDL_HWSURFACE, pixelMultiplier, pixelMultiplier, 32, 0, 0, 0, 0);
     if(square[1]==NULL){
         fprintf(stderr,"Erreur lors du chargement de la surface %s",SDL_GetError());
     }
     SDL_FillRect(square[1], NULL, SDL_MapRGB(square[1]->format, 0xCC, 0xCC, 0xCC));
 
     //PIXEL DARK_GREY
-    square[2] = SDL_CreateRGBSurface(SDL_HWSURFACE, 1, 1, 32, 0, 0, 0, 0);
+    square[2] = SDL_CreateRGBSurface(SDL_HWSURFACE, pixelMultiplier, pixelMultiplier, 32, 0, 0, 0, 0);
     if(square[2]==NULL){
         fprintf(stderr,"Erreur lors du chargement de la surface %s",SDL_GetError());
     }
     SDL_FillRect(square[2], NULL, SDL_MapRGB(square[2]->format, 0x77, 0x77, 0x77));
     //PIXEL BLACK
-    square[3] = SDL_CreateRGBSurface(SDL_HWSURFACE, 1, 1, 32, 0, 0, 0, 0);
+    square[3] = SDL_CreateRGBSurface(SDL_HWSURFACE, pixelMultiplier, pixelMultiplier, 32, 0, 0, 0, 0);
     if(square[3]==NULL){
         fprintf(stderr,"Erreur lors du chargement de la surface %s",SDL_GetError());
     }
@@ -284,9 +357,9 @@ void initPixel(){
 
     for(x=0; x<160; x++){
         for(y=0; y<144; y++){
-            z80.m_ScreenData[x][y].position.x = x;
-            z80.m_ScreenData[x][y].position.y = y;
-            z80.m_ScreenData[x][y].color = WHITE;
+            z80.m_ScreenData[x][y].position.x = x*pixelMultiplier;
+            z80.m_ScreenData[x][y].position.y = y*pixelMultiplier;
+            z80.m_ScreenData[x][y].color = BLACK;
         }
     }
 
@@ -345,4 +418,29 @@ void HandleInput(SDL_Event& event){
 			KeyReleased(key) ;
 		}
 	}
+}
+
+void GameBoyASCII(){
+	printf(" _n_________________\n");
+	printf("|_|_______________|_|\n");
+	printf("|  ,-------------.  |\n");
+	printf("| |  .---------.  | |\n");
+	printf("| |  |         |  | |\n");
+	printf("| |  |         |  | |\n");
+	printf("| |  |         |  | |\n");
+	printf("| |  |         |  | |\n");
+	printf("| |  `---------'  | |\n");
+	printf("| `---------------' |\n");
+	printf("|   _ GAME BOO      |\n");
+	printf("| _| |_         ,-. |\n");
+	printf("||_ O _|   ,-.  ._, |\n");
+	printf("|  |_|     ._,    A |\n");
+	printf("|    _  _    B      |\n");
+	printf("|   // //           |\n");
+	printf("|  // //    \\\\\\\\\\\\  |\n");
+	printf("|  `  `      \\\\\\\\\\\\ ,\n");
+	printf("|________...______,'\n\n\n\n");
+}
+void TitleProg(){
+	printf("GAMEBOO a Gameboy Emulator  BY  Julien MAGNIN a.k.a MSDOS\n\n");  
 }
