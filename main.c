@@ -3,7 +3,12 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <windows.h>
+#include <tchar.h>
+#include <commdlg.h>
 #include <SDL/SDL.h>
+#include <SDL/SDL_ttf.h>
+#include "simpleini/SimpleIni.h"
 
 int loopCounter = 0;
 int cyclesTime = 0;
@@ -19,6 +24,22 @@ char saveName[200];
 long int ScreenWidth = 160;
 long int ScreenHeight = 144;
 int pixelMultiplier = 1;
+
+int joypad_Up = SDLK_UP;
+int joypad_Down = SDLK_DOWN;
+int joypad_Left = SDLK_LEFT;
+int joypad_Right = SDLK_RIGHT;
+int joypad_A = SDLK_s;
+int joypad_B = SDLK_a;
+int joypad_Start = SDLK_RETURN;
+int joypad_Select = SDLK_SPACE;
+
+
+int resOpenFile;
+OPENFILENAME ofn;
+TCHAR tmpOpenFile[1024];
+
+CSimpleIniA ini;
 
 
 #include "z80.c"
@@ -39,6 +60,9 @@ void FPSChecking();
 void GameBoyASCII();
 void TitleProg();
 void Menu();
+void apply_surface(int, int, SDL_Surface*, SDL_Surface*);
+void delay(int);
+void GetConfig();
 void Update();
 
 
@@ -51,12 +75,13 @@ int main(int argc, char* argv[]){
 	freopen( "CON", "w", stdout );
 	freopen( "CON", "w", stderr );
 	
-	Menu();
+	ini.SetUnicode();
+	ini.LoadFile("config.ini");
 	
-    char filePath[200];
-    printf("Indiquez le 'chemin absolu/absolute path' de votre rom :  ");
-    scanf("%[^\n]", filePath);
-    printf("Scanf: OK\n\n");
+	GetConfig();
+	
+	Menu();
+	//ofn.lpstrFile contient le path de la rom
 
     initSDL();
 
@@ -65,7 +90,7 @@ int main(int argc, char* argv[]){
     
     bool getReady = false;
 
-    getReady = LoadGame(filePath);
+    getReady = LoadGame(ofn.lpstrFile);
 	
 	initZ80();
     printf("initZ80: OK\n\n");
@@ -108,7 +133,7 @@ int main(int argc, char* argv[]){
 	
 	
 	//SaveFile Name
-	strcpy(saveName, filePath);
+	strcpy(saveName, ofn.lpstrFile);
 	char *pch;
 	pch = strstr(saveName,".gb");
 	strncpy(pch,".sav",4);
@@ -191,7 +216,7 @@ void Menu(){
 		
 		char menuSelect = '0';
 		printf("--------------------------------------------------------\n");
-		printf("|1|-Load Rom/Game   |2|-Change Screen Resolution   |3|-Config Joypad\n\n");
+		printf("|1|-Load Rom/Game   |2|-Change Screen Resolution   |3|-Set Joypad\n\n");
 		printf("Put 1,2 or 3 and press enter to choose one task : ");
 		menuSelect = getchar();
 		while(getchar() != '\n');
@@ -203,7 +228,24 @@ void Menu(){
 		}
 		
 		if(menuSelect == '1'){
-			passMenu = true;
+			tmpOpenFile[0]= '\0' ;
+			ZeroMemory ( &ofn , sizeof ( OPENFILENAMEW ) );
+			ofn.lStructSize = sizeof ( OPENFILENAMEW );
+			ofn.lpstrFile = tmpOpenFile;
+			ofn.nMaxFile = 1024;
+			ofn.lpstrTitle = _T("Choose a Game");
+			ofn.lpstrFilter = _T("All (*.*)\0*.*\0Gameboy (*.gb)\0*.GB\0");
+			ofn.Flags = OFN_LONGNAMES | OFN_EXPLORER; // | OFN_ALLOWMULTISELECT  ;
+			resOpenFile = GetOpenFileName(&ofn);
+			
+			if(resOpenFile == 1){
+				passMenu = true;
+			}
+			else{
+				printf("Error loading ROM\n");
+				delay(2);
+			}
+			
 		}
 		else if(menuSelect == '2'){
 			char screenRes = '0';
@@ -224,23 +266,210 @@ void Menu(){
 				ScreenWidth = 160;
 				ScreenHeight = 144;
 				pixelMultiplier = 1;
+				ini.SetValue("screen", "size", "1");
+				ini.SaveFile("config.ini");
+				printf("Your Config have been saved\n");
+				delay(1);
 			}
 			else if(screenRes == '2'){
 				ScreenWidth = 320;
 				ScreenHeight = 288;
 				pixelMultiplier = 2;
+				ini.SetValue("screen", "size", "2");
+				ini.SaveFile("config.ini");
+				printf("Your Config have been saved\n");
+				delay(1);
 			}
 			else if(screenRes == '3'){
 				ScreenWidth = 480;
 				ScreenHeight = 432;
 				pixelMultiplier = 3;
+				ini.SetValue("screen", "size", "3");
+				ini.SaveFile("config.ini");
 			}
 			else if(screenRes == '4'){
 				ScreenWidth = 640;
 				ScreenHeight = 576;
 				pixelMultiplier = 4;
+				ini.SetValue("screen", "size", "4");
+				ini.SaveFile("config.ini");
+				printf("Your Config have been saved\n");
+				delay(1);
 			}
 			printf("\n\n");
+		}
+		else if(menuSelect == '3'){
+			
+			SDL_Event event;
+			SDL_Surface *message = NULL; 
+			SDL_Surface *screen = NULL;
+			TTF_Font *font;
+			SDL_Color textColor = { 255, 255, 255 };
+			bool waitForPressed = true;
+			
+			printf("--------------------------------------------------------\n");
+			printf("Joypad Input Setting\n\n");
+			
+			if( SDL_Init( SDL_INIT_EVERYTHING ) == -1 ) { 
+				fprintf(stderr,"Erreur lors de l'initialisation de la SDL %s",SDL_GetError());
+				exit(EXIT_FAILURE);
+			}
+			
+			screen = SDL_SetVideoMode( 640, 100, 32, SDL_SWSURFACE );
+			
+			TTF_Init();
+			
+			SDL_WM_SetCaption( "CONFIG INPUT", NULL );
+			
+			font = TTF_OpenFont( "8bit_madness.ttf", 30 );
+			
+			message = TTF_RenderText_Solid( font, "Press the key you want to use for | UP |", textColor );
+			apply_surface( 0, 30, message, screen );
+			SDL_Flip(screen);
+			while(waitForPressed){
+				while(SDL_PollEvent(&event)){
+					if(event.type == SDL_KEYDOWN){
+						joypad_Up = event.key.keysym.sym;
+						char buff[10] = "";
+						sprintf(buff, "%d", joypad_Up);
+						ini.SetValue("joypad", "up", buff);
+						ini.SaveFile("config.ini");
+						waitForPressed = false;
+						SDL_FillRect(screen, NULL, 0x000000);
+					}
+				}
+			}
+			message = TTF_RenderText_Solid( font, "Press the key you want to use for | DOWN |", textColor );
+			apply_surface( 0, 30, message, screen );
+			SDL_Flip(screen);
+			waitForPressed = true;
+			while(waitForPressed){
+				while(SDL_PollEvent(&event)){
+					if(event.type == SDL_KEYDOWN){
+						joypad_Down = event.key.keysym.sym;
+						char buff[10] = "";
+						sprintf(buff, "%d", joypad_Down);
+						ini.SetValue("joypad", "down", buff);
+						ini.SaveFile("config.ini");
+						waitForPressed = false;
+						SDL_FillRect(screen, NULL, 0x000000);
+					}
+				}
+			}
+			message = TTF_RenderText_Solid( font, "Press the key you want to use for | LEFT |", textColor );
+			apply_surface( 0, 30, message, screen );
+			SDL_Flip(screen);
+			waitForPressed = true;
+			while(waitForPressed){
+				while(SDL_PollEvent(&event)){
+					if(event.type == SDL_KEYDOWN){
+						joypad_Left = event.key.keysym.sym;
+						char buff[10] = "";
+						sprintf(buff, "%d", joypad_Left);
+						ini.SetValue("joypad", "left", buff);
+						ini.SaveFile("config.ini");
+						waitForPressed = false;
+						SDL_FillRect(screen, NULL, 0x000000);
+					}
+				}
+			}
+			message = TTF_RenderText_Solid( font, "Press the key you want to use for | RIGHT |", textColor );
+			apply_surface( 0, 30, message, screen );
+			SDL_Flip(screen);
+			waitForPressed = true;
+			while(waitForPressed){
+				while(SDL_PollEvent(&event)){
+					if(event.type == SDL_KEYDOWN){
+						joypad_Right = event.key.keysym.sym;
+						char buff[10] = "";
+						sprintf(buff, "%d", joypad_Right);
+						ini.SetValue("joypad", "right", buff);
+						ini.SaveFile("config.ini");
+						waitForPressed = false;
+						SDL_FillRect(screen, NULL, 0x000000);
+					}
+				}
+			}
+			message = TTF_RenderText_Solid( font, "Press the key you want to use for | A |", textColor );
+			apply_surface( 0, 30, message, screen );
+			SDL_Flip(screen);
+			waitForPressed = true;
+			while(waitForPressed){
+				while(SDL_PollEvent(&event)){
+					if(event.type == SDL_KEYDOWN){
+						joypad_A = event.key.keysym.sym;
+						char buff[10] = "";
+						sprintf(buff, "%d", joypad_A);
+						ini.SetValue("joypad", "a", buff);
+						ini.SaveFile("config.ini");
+						waitForPressed = false;
+						SDL_FillRect(screen, NULL, 0x000000);
+					}
+				}
+			}
+			message = TTF_RenderText_Solid( font, "Press the key you want to use for | B |", textColor );
+			apply_surface( 0, 30, message, screen );
+			SDL_Flip(screen);
+			waitForPressed = true;
+			while(waitForPressed){
+				while(SDL_PollEvent(&event)){
+					if(event.type == SDL_KEYDOWN){
+						joypad_B = event.key.keysym.sym;
+						char buff[10] = "";
+						sprintf(buff, "%d", joypad_B);
+						ini.SetValue("joypad", "b", buff);
+						ini.SaveFile("config.ini");
+						waitForPressed = false;
+						SDL_FillRect(screen, NULL, 0x000000);
+					}
+				}
+			}
+			message = TTF_RenderText_Solid( font, "Press the key you want to use for | START |", textColor );
+			apply_surface( 0, 30, message, screen );
+			SDL_Flip(screen);
+			waitForPressed = true;
+			while(waitForPressed){
+				while(SDL_PollEvent(&event)){
+					if(event.type == SDL_KEYDOWN){
+						joypad_Start = event.key.keysym.sym;
+						char buff[10] = "";
+						sprintf(buff, "%d", joypad_Start);
+						ini.SetValue("joypad", "start", buff);
+						ini.SaveFile("config.ini");
+						waitForPressed = false;
+						SDL_FillRect(screen, NULL, 0x000000);
+					}
+				}
+			}
+			message = TTF_RenderText_Solid( font, "Press the key you want to use for | SELECT |", textColor );
+			apply_surface( 0, 30, message, screen );
+			SDL_Flip(screen);
+			waitForPressed = true;
+			while(waitForPressed){
+				while(SDL_PollEvent(&event)){
+					if(event.type == SDL_KEYDOWN){
+						joypad_Select = event.key.keysym.sym;
+						char buff[10] = "";
+						sprintf(buff, "%d", joypad_Select);
+						ini.SetValue("joypad", "select", buff);
+						ini.SaveFile("config.ini");
+						waitForPressed = false;
+						SDL_FillRect(screen, NULL, 0x000000);
+					}
+				}
+			}
+			
+			SDL_FreeSurface( message ); 
+
+			TTF_CloseFont( font ); 
+
+			TTF_Quit(); 
+
+			SDL_Quit();
+			
+			printf("Your Config have been saved\n");
+			delay(1);
+			
 		}
 	}
 }
@@ -383,37 +612,75 @@ void RenderScreen(){
 }
 
 
+
 void HandleInput(SDL_Event& event){
+	
 	if( event.type == SDL_KEYDOWN ){
 		int key = -1 ;
-		switch( event.key.keysym.sym ){
-			case SDLK_a : key = 4 ; break ;
-			case SDLK_s : key = 5 ; break ;
-			case SDLK_RETURN : key = 7 ; break ;
-			case SDLK_SPACE : key = 6; break ;
-			case SDLK_RIGHT : key = 0 ; break ;
-			case SDLK_LEFT : key = 1 ; break ;
-			case SDLK_UP : key = 2 ; break ;
-			case SDLK_DOWN : key = 3 ; break ;
-			case SDLK_ESCAPE : quit = true ; break ;
+		
+		if(event.key.keysym.sym == joypad_A){
+			key = 4;
 		}
+		else if(event.key.keysym.sym == joypad_B){
+			key = 5;
+		}
+		else if(event.key.keysym.sym == joypad_Start){
+			key = 7;
+		}
+		else if(event.key.keysym.sym == joypad_Select){
+			key = 6;
+		}
+		else if(event.key.keysym.sym == joypad_Right){
+			key = 0;
+		}
+		else if(event.key.keysym.sym == joypad_Left){
+			key = 1;
+		}
+		else if(event.key.keysym.sym == joypad_Up){
+			key = 2;
+		}
+		else if(event.key.keysym.sym == joypad_Down){
+			key = 3;
+		}
+		else if(event.key.keysym.sym == SDLK_ESCAPE){
+			quit = true;
+		}
+		
 		if (key != -1){
 			KeyPressed(key) ;
 		}
 	}
 	else if( event.type == SDL_KEYUP ){
 		int key = -1 ;
-		switch( event.key.keysym.sym ){
-			case SDLK_a : key = 4 ; break ;
-			case SDLK_s : key = 5 ; break ;
-			case SDLK_RETURN : key = 7 ; break ;
-			case SDLK_SPACE : key = 6; break ;
-			case SDLK_RIGHT : key = 0 ; break ;
-			case SDLK_LEFT : key = 1 ; break ;
-			case SDLK_UP : key = 2 ; break ;
-			case SDLK_DOWN : key = 3 ; break ;
-			case SDLK_ESCAPE : quit = true ; break ;
+		
+		if(event.key.keysym.sym == joypad_A){
+			key = 4;
 		}
+		else if(event.key.keysym.sym == joypad_B){
+			key = 5;
+		}
+		else if(event.key.keysym.sym == joypad_Start){
+			key = 7;
+		}
+		else if(event.key.keysym.sym == joypad_Select){
+			key = 6;
+		}
+		else if(event.key.keysym.sym == joypad_Right){
+			key = 0;
+		}
+		else if(event.key.keysym.sym == joypad_Left){
+			key = 1;
+		}
+		else if(event.key.keysym.sym == joypad_Up){
+			key = 2;
+		}
+		else if(event.key.keysym.sym == joypad_Down){
+			key = 3;
+		}
+		else if(event.key.keysym.sym == SDLK_ESCAPE){
+			quit = true;
+		}
+		
 		if (key != -1){
 			KeyReleased(key) ;
 		}
@@ -443,4 +710,66 @@ void GameBoyASCII(){
 }
 void TitleProg(){
 	printf("GAMEBOO a Gameboy Emulator  BY  Julien MAGNIN a.k.a MSDOS\n\n");  
+}
+
+void apply_surface( int x, int y, SDL_Surface* source, SDL_Surface* destination)
+{
+    SDL_Rect offset;
+ 
+    offset.x = x;
+    offset.y = y;
+ 
+    SDL_BlitSurface( source, NULL, destination, &offset );
+}
+
+void delay(int i)    /*Pause l'application pour i seconds*/
+{
+    clock_t start,end;
+    start=clock();
+    while(((end=clock())-start)<=i*CLOCKS_PER_SEC);
+}
+
+void GetConfig(){
+	const char * tempMultiplier = ini.GetValue("screen", "size", "255");
+	
+	pixelMultiplier = strtol(tempMultiplier, NULL, 10);
+	
+	switch(pixelMultiplier){
+		case 1: ScreenWidth = 160; ScreenHeight = 144; break;
+		case 2: ScreenWidth = 320; ScreenHeight = 288; break;
+		case 3: ScreenWidth = 480; ScreenHeight = 432; break;
+		case 4: ScreenWidth = 640; ScreenHeight = 576; break;
+	}
+	
+	const char * tempJoypadUp = ini.GetValue("joypad", "up", "1000");
+	
+	joypad_Up = strtol(tempJoypadUp, NULL, 10);
+	
+	const char * tempJoypadDown = ini.GetValue("joypad", "down", "1000");
+	
+	joypad_Down = strtol(tempJoypadDown, NULL, 10);
+	
+	const char * tempJoypadLeft = ini.GetValue("joypad", "left", "1000");
+	
+	joypad_Left = strtol(tempJoypadLeft, NULL, 10);
+	
+	const char * tempJoypadRight = ini.GetValue("joypad", "right", "1000");
+	
+	joypad_Right = strtol(tempJoypadRight, NULL, 10);
+	
+	const char * tempJoypadA = ini.GetValue("joypad", "a", "1000");
+	
+	joypad_A = strtol(tempJoypadA, NULL, 10);
+	
+	const char * tempJoypadB = ini.GetValue("joypad", "b", "1000");
+	
+	joypad_B = strtol(tempJoypadB, NULL, 10);
+	
+	const char * tempJoypadStart = ini.GetValue("joypad", "start", "1000");
+	
+	joypad_Start = strtol(tempJoypadStart, NULL, 10);
+	
+	const char * tempJoypadSelect = ini.GetValue("joypad", "select", "1000");
+	
+	joypad_Select = strtol(tempJoypadSelect, NULL, 10);
 }
