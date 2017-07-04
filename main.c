@@ -42,7 +42,7 @@ TCHAR tmpOpenFile[1024];
 CSimpleIniA ini;
 
 
-#include "z80.c"
+#include "processor.c"
 #include "NOROM.c"
 #include "MBC1.c"
 #include "MBC2.c"
