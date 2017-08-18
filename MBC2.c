@@ -50,6 +50,9 @@ void Write_MBC2(word address, byte data){
 		data |= 0xE0;
 		z80.m_Rom[address] = data;
 	}
+	else if(address >= 0xFF10 && address <= 0xFF26){
+		apu.write_register( address, data );
+	}
     else if(0xFF44 == address){
         z80.m_Rom[0xFF44] = 0;
     }
@@ -75,6 +78,9 @@ byte Read_MBC2(word address){
     }
 	else if (0xFF00 == address){
 		return GetJoypadState();
+	}
+	else if(address >= 0xFF10 && address <= 0xFF26){
+		return apu.read_register( address );
 	}
 	else{
 		return z80.m_Rom[address];

@@ -1,3 +1,4 @@
+#include "Basic_Gb_Apu.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -9,6 +10,14 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 #include "simpleini/SimpleIni.h"
+#include "gb_apu/Gb_Apu.h"
+#include "gb_apu/Multi_Buffer.h"
+#include "gb_apu/blargg_common.h"
+#include "gb_apu/blargg_source.h"
+#include "gb_apu/Blip_Buffer.h"
+#include "gb_apu/Blip_Synth.h"
+#include "gb_apu/gb_Oscs.h"
+#include "Sound_Queue.h"
 
 int loopCounter = 0;
 int cyclesTime = 0;
@@ -41,6 +50,16 @@ TCHAR tmpOpenFile[1024];
 
 CSimpleIniA ini;
 
+#include "Basic_Gb_Apu.cpp"
+#include "gb_apu/Gb_Apu.cpp"
+#include "gb_apu/Multi_Buffer.cpp"
+#include "gb_apu/Gb_Oscs.cpp"
+#include "gb_apu/Blip_Buffer.cpp"
+#include "Sound_Queue.cpp"
+
+static Basic_Gb_Apu apu;
+
+Sound_Queue sound;
 
 #include "processor.c"
 #include "NOROM.c"
@@ -93,6 +112,11 @@ int main(int argc, char* argv[]){
     getReady = LoadGame(ofn.lpstrFile);
 	
 	initZ80();
+	
+	long const sample_rate = 44100;
+	if ( apu.set_sample_rate( sample_rate ) )
+		return EXIT_FAILURE;
+	
     printf("initZ80: OK\n\n");
 	
     if(getReady){
@@ -157,6 +181,8 @@ int main(int argc, char* argv[]){
 		
 		unsigned int time2 = SDL_GetTicks();
 		
+		sound.start( sample_rate, 2 );
+		
 		while(!quit){
 			while(SDL_PollEvent(&event)){
 				HandleInput(event);
@@ -171,6 +197,11 @@ int main(int argc, char* argv[]){
 			if((time2 + interval) < current){
 				FPSChecking();
 				Update();
+				int const buf_size = apu.samples_avail();
+				blip_sample_t buf [buf_size];
+				
+				long count = apu.read_samples( buf, buf_size );
+				sound.write( buf, count );
 				time2 = current;
 			}
 			
@@ -204,6 +235,7 @@ void Update(){
         DoInterupts();
     }
     RenderScreen();
+	apu.end_frame();
 }
 
 void Menu(){
