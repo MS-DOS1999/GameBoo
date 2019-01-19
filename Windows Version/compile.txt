@@ -1,1 +1,0 @@
-g++ -Wall main.c -o GameBoo.exe -lmingw32 -lcomdlg32 -lSDLmain -lSDL -lSDL_TTF -Wno-write-strings -Wno-sign-compare -Wno-unused-value -Wno-switch -static-libgcc -static-libstdc++
