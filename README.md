@@ -1,4 +1,5 @@
 # GameBoo
+```bash
 
         GGGGGGGGGGGGG                                                              
      GGG::::::::::::G                                                              
@@ -27,3 +28,4 @@ G:::::G        G::::G a::::aaaa::::::a m::::m   m::::m   m::::me::::::eeeeeeeeee
   Sound Emulation programmed by blargg
   Chiptune used for intro and file selection composed by Kid Zan
   Original Gameboy pixel art by ENSELLITIS
+ ```
