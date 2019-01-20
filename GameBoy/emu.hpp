@@ -3,6 +3,7 @@
 
 #define MAX_LOOP 69905
 
+#include <ctime>
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -110,6 +111,7 @@ private:
 	byte rtcLatch1;
 	byte rtcLatch2;
 	byte rtcReg[5];
+	byte latchReg[5];
 
 	//apu var
 	Gb_Apu apu;
@@ -139,6 +141,11 @@ private:
 	byte ReadNOROM(word address);
 	void WriteMBC1(word address, byte data);
 	byte ReadMBC1(word address);
+	void WriteMBC2(word address, byte data);
+	byte ReadMBC2(word address);
+	void GrabTime();
+	void WriteMBC3(word address, byte data);
+	byte ReadMBC3(word address);
 };
 
 

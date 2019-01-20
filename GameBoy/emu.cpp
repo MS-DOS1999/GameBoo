@@ -517,6 +517,7 @@ void Emu::Run()
 		{
 			if(event.type == sfEvtClosed)
 			{
+				get().WriteSave();
 				sfRenderWindow_close(get().window);
 			}
 
@@ -627,14 +628,14 @@ void Emu::WriteMemory(word address, byte data)
 	{
 		get().WriteMBC1(address, data);
 	}
-	/*else if(z80.m_MBC2)
+	else if(get().MBC2)
 	{
-		Write_MBC2(address, data);
+		get().WriteMBC2(address, data);
 	}
-	else if(z80.m_MBC3)
+	else if(get().MBC3)
 	{
-		Write_MBC3(address, data);
-	}*/
+		get().WriteMBC3(address, data);
+	}
 	
 }
 
@@ -650,16 +651,15 @@ byte Emu::ReadMemory(word address)
 	{
 		return get().ReadMBC1(address);
 	}
-	/*else if(z80.m_MBC2)
+	else if(get().MBC2)
 	{
-		return Read_MBC2(address);
+		return get().ReadMBC2(address);
 	}
-	else if(z80.m_MBC3)
+	else if(get().MBC3)
 	{
-		return Read_MBC3(address);
-	}*/
+		return get().ReadMBC3(address);
+	}
 	return 0;
-
 }
 
 void Emu::DoDMATransfer(byte data)
@@ -743,7 +743,7 @@ byte Emu::ReadNOROM(word address)
 	{
 		return get().GetJoypadState();
 	}
-	else if(address >= 0xFF10 && address <= 0xFF26)
+	else if(address >= apu.start_addr && address <= apu.end_addr)
 	{
 		return apu.read_register(get().loopCounter, address);
 	}
@@ -852,7 +852,7 @@ void Emu::WriteMBC1(word address, byte data)
 		data |= 0xE0;
 		get().internalMemory[address] = data;
 	}
-	else if((address >= 0xFF10) && (address <= 0xFF26))
+	else if(address >= apu.start_addr && address <= apu.end_addr)
 	{
 		apu.write_register(get().loopCounter, address, data);
 	}
@@ -890,7 +890,312 @@ byte Emu::ReadMBC1(word address)
 	{
 		return get().GetJoypadState();
 	}
-    else if((address >= 0xFF10) && address <= 0xFF26)
+    else if(address >= apu.start_addr && address <= apu.end_addr)
+	{
+		return apu.read_register(get().loopCounter, address);
+	}
+	else
+	{
+		return get().internalMemory[address];
+	}
+}
+
+void Emu::WriteMBC2(word address, byte data)
+{
+	if(address < 0x2000)
+	{
+		if(TestBit(address, 8) == false)
+		{
+			if((data & 0xF) == 0xA)
+			{
+				get().enableRam = true;
+			}
+			else if(data == 0x0)
+			{
+				get().enableRam = false;
+			}
+		}
+	}
+	else if((address >= 0x2000) && (address < 0x4000))
+	{
+		data &= 0xF;
+		get().currentRomBank = data;
+	}
+	else if((address >= 0x4000) && (address < 0x8000))
+	{
+		//restricted area
+	}
+	else if((address >= 0xA000) && (address < 0xC000))
+	{
+		if((address >= 0xA000) && (address < 0xA200))
+		{
+			word newAdress = address - 0xA000;
+			get().ramBanks[newAdress + get().currentRamBank * 0x2000] = data;
+		}
+		else
+		{
+			//restricted area
+		}
+	}
+	else if((address >= 0xE000) && (address <= 0xFDFF))
+	{
+		get().internalMemory[address] = data;
+		get().internalMemory[address - 0x2000] = data;
+	}
+	else if((address >= 0xFEA0) && (address <= 0xFEFF))
+	{
+		//restricted area
+	}
+	else if(address == 0xFF04)
+	{
+		get().internalMemory[0xFF04] = 0;
+		SharpLr::SetDividerRegister(0);
+	}
+	else if(address == 0xFF07)
+	{
+		data |= 0xF8;
+		get().internalMemory[address] = data;
+	}
+	else if(address == 0xFF0F)
+	{
+		data |= 0xE0;
+		get().internalMemory[address] = data;
+	}
+	else if(address >= apu.start_addr && address <= apu.end_addr)
+	{
+		apu.write_register(get().loopCounter, address, data);
+	}
+	else if(address == 0xFF44)
+	{
+		get().internalMemory[0xFF44] = 0;
+	}
+	else if(address == 0xFF46)
+	{
+		get().DoDMATransfer(data);
+	}
+	else if((address >= 0xFF4C) && (address <= 0xFF7F))
+	{
+		//restricted area
+	}
+	else
+	{
+		get().internalMemory[address] = data;
+	}
+}
+
+byte Emu::ReadMBC2(word address)
+{
+	if((address >= 0x4000) && (address <= 0x7FFF))
+	{
+		word newAdress = address - 0x4000;
+		return get().cartridgeMemory[newAdress + (get().currentRomBank * 0x4000)];
+	}
+	else if((address >= 0xA000) && (address <= 0xBFFF))
+	{
+		word newAdress = address - 0xA000;
+		return get().ramBanks[newAdress + (get().currentRamBank * 0x2000)];
+	}
+	else if(address == 0xFF00)
+	{
+		return get().GetJoypadState();
+	}
+	else if(address >= apu.start_addr && address <= apu.end_addr)
+	{
+		return apu.read_register(get().loopCounter, address);
+	}
+	else
+	{
+		return get().internalMemory[address];
+	}
+}
+
+void Emu::GrabTime()
+{
+	time_t systemTime = time(0);
+	tm* currentTime = localtime(&systemTime);
+
+	get().rtcReg[0] = currentTime->tm_sec;
+
+	if(get().rtcReg[0] > 59)
+	{
+		get().rtcReg[0] = 59;
+	}
+
+	get().rtcReg[0] = (get().rtcReg[0] % 60);
+
+	get().rtcReg[1] = currentTime->tm_min;
+	get().rtcReg[1] = (get().rtcReg[1] % 60);
+
+	get().rtcReg[2] = currentTime->tm_hour;
+	get().rtcReg[2] = (get().rtcReg[1] % 24);
+
+	word tempDay = currentTime->tm_yday;
+	tempDay = (tempDay % 366);
+
+	get().rtcReg[3] = tempDay & 0xFF;
+	tempDay >>= 8;
+
+	if(tempDay == 1)
+	{
+		get().rtcReg[4] |= 0x1;
+	}
+	else
+	{
+		get().rtcReg[4] &= ~0x1;
+	}
+
+	for(int x = 0; x < 5; x++)
+	{
+		get().latchReg[5] = get().rtcReg[5];
+	}
+}
+
+void Emu::WriteMBC3(word address, byte data)
+{
+	if(address < 0x2000)
+	{
+		if((data & 0xF) == 0xA)
+		{
+            if(get().activeRam)
+            {
+				get().enableRam = true;
+			}
+			if(get().rtc)
+			{
+				get().rtcEnabled = true;
+			}
+		}
+		else
+		{
+			get().enableRam = false;
+			get().rtcEnabled = false;
+		}
+	}
+	else if((address >= 0x2000) && (address < 0x4000))
+	{
+		if((data & 0x7F) == 0x00)
+		{
+			get().currentRomBank = 0x01;
+		}
+		else
+		{
+			get().currentRomBank = (data & 0x7F);
+		}
+	}
+	else if((address >= 0x4000) && (address < 0x6000))
+	{
+		if((data >= 0x08) && (data <= 0x0C))
+		{
+			get().rtc = true;
+			get().currentRamBank = data;
+		}
+		if(data <= 0x03)
+		{
+			get().rtc = false;
+			get().currentRamBank = data;
+		}
+	}
+	else if((address >= 0x6000) && (address < 0x8000))
+	{
+		if(get().rtcEnabled)
+		{
+			if((get().rtcLatch1 == 0xFF) && (data == 0))
+			{
+				get().rtcLatch1 = 0;
+			}
+			else if((get().rtcLatch2 == 0xFF) && (data == 1))
+			{
+				GrabTime();
+				get().rtcLatch1 = get().rtcLatch2 = 0xFF;	
+			}
+		}
+	}
+	else if((address >= 0xA000) && (address < 0xC000))
+	{
+        if(get().enableRam && (get().currentRamBank <= 3))
+        {
+			word newAddress = address - 0xA000;
+			get().ramBanks[newAddress + (get().currentRamBank * 0x2000)] = data;
+        }
+		else if(get().rtcEnabled && (get().currentRamBank >= 8) && (get().currentRamBank <= 12))
+		{
+			get().rtcReg[get().currentRamBank - 8] = data;
+		}
+    }
+	else if((address >= 0xE000) && (address <= 0xFDFF))
+	{
+		get().internalMemory[address] = data ;
+		get().internalMemory[address - 0x2000] = data ; // echo data into ram address
+	}
+	else if((address >= 0xFEA0) && (address <= 0xFEFF))
+	{
+ 		//restricted area
+	}
+    else if(address == 0xFF04)
+    {
+        get().internalMemory[0xFF04] = 0;
+		SharpLr::SetDividerRegister(0);
+    }
+	else if(address == 0xFF07)
+	{
+		data |= 0xF8;
+		get().internalMemory[address] = data;
+	}
+	else if(address == 0xFF0F)
+	{
+		data |= 0xE0;
+		get().internalMemory[address] = data;
+	}
+	else if(address >= apu.start_addr && address <= apu.end_addr)
+	{
+		apu.write_register(get().loopCounter, address, data);
+	}
+    else if(address == 0xFF44)
+    {
+        get().internalMemory[0xFF44] = 0;
+    }
+	else if(address == 0xFF46)
+	{
+        get().DoDMATransfer(data);
+    }
+	else if((address >= 0xFF4C) && (address <= 0xFF7F))
+	{
+ 		//restricted area
+	}
+	else
+	{
+		get().internalMemory[address] = data;
+	}
+}
+
+byte Emu::ReadMBC3(word address)
+{
+	if((address >= 0x4000) && (address <= 0x7FFF))
+	{
+			word newAddress = address - 0x4000;
+			return get().cartridgeMemory[newAddress + (get().currentRomBank * 0x4000)];
+    }
+    else if((address >= 0xA000) && (address <= 0xBFFF))
+    {
+		if((get().enableRam) && (get().currentRamBank <= 3))
+		{
+			word newAddress = address - 0xA000;
+			return get().ramBanks[newAddress + (get().currentRamBank * 0x2000)];
+		}
+		else if((get().rtcEnabled) && (get().currentRamBank >= 8) && (get().currentRamBank <= 12))
+		{
+			return get().rtcReg[get().currentRamBank - 8];
+		}
+		else
+		{
+			return 0x00;
+		}
+    }
+	else if (address == 0xFF00)
+	{
+		return get().GetJoypadState();
+	}
+	else if(address >= apu.start_addr && address <= apu.end_addr)
 	{
 		return apu.read_register(get().loopCounter, address);
 	}
