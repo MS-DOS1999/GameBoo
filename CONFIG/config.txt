@@ -1,0 +1,19 @@
+ScreenSize=1;
+LcdColor=0;
+
+
+// Value description //
+
+/*
+
+ScreenSize :
+	1 -> Original screen size (160x144)
+	2 -> Double Screen size (320x288)
+	3 -> FullScreen
+
+LcdColor :
+	0 -> GameBoy ColorScreen (Original Hex Value)
+	1 -> GameBoy Pocket ColorScreen (Black&White)
+	2 -> GameBoy Optimized ColorScreen (BGB Color Screen)
+	
+*/

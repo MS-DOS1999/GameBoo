@@ -4,6 +4,7 @@ int main(int argc, char **argv)
 {
 	Emu::Intro();
 	Emu::PlayMusic();
+	Emu::GetConfig();
 	Emu::HideCMD();
 	Emu::FileBrowser();
 	Emu::StopMusic();
@@ -52,6 +53,7 @@ Emu::Emu()
 	this->currentRomBank = 1;
 	this->currentRamBank = 0;
 	this->joypadState = 0xFF;
+	this->pixelSize = 1;
 
 	memset(this->cartridgeMemory, 0, sizeof(this->cartridgeMemory));
 	memset(&this->ramBanks, 0, sizeof(this->ramBanks));
@@ -89,6 +91,8 @@ Emu::Emu()
     this->internalMemory[0xFF4B] = 0x00;
 	this->internalMemory[0xFF0F] = 0xE1;
     this->internalMemory[0xFFFF] = 0x00;
+
+    this->enableRam = false;
 }
 
 Emu& Emu::get(void)
@@ -96,6 +100,59 @@ Emu& Emu::get(void)
 	static Emu instance;
 	return instance;
 }
+char Emu::GetLcdColor()
+{
+	return get().lcdColor;
+}
+
+void Emu::GetConfig()
+{
+	std::ifstream input("CONFIG\\config.txt");
+	for(int i = 0; i < 2; i++)
+	{
+		std::string id;
+		std::string value;
+		std::string empty;
+		std::getline(input, id, '=');
+		std::getline(input, value, ';');
+		std::getline(input, empty, '\n');
+
+		if(id.compare("ScreenSize") == 0)
+		{
+			if(value.at(0) == '1')
+			{
+				get().screenConfig = 1;
+			}
+			else if(value.at(0) == '2')
+			{
+				get().screenConfig = 2;
+			}
+			else if(value.at(0) == '3')
+			{
+				get().screenConfig = 3;
+			}
+		}
+
+		if(id.compare("LcdColor") == 0)
+		{
+			if(value.at(0) == '0')
+			{
+				get().lcdColor = 0;
+			}
+			else if(value.at(0) == '1')
+			{
+				get().lcdColor = 1;
+			}
+			else if(value.at(0) == '2')
+			{
+				get().lcdColor = 2;
+			}
+		}
+	}
+
+	input.close();
+}
+
 void Emu::Intro()
 {
 	freopen("CON", "w", stdout);
@@ -187,44 +244,111 @@ void Emu::Execute()
 
 void Emu::InitSFML()
 {
-	get().mode = (sfVideoMode){351, 541, 32};
+	if(get().screenConfig == 1 || get().screenConfig == 2)
+	{
+		get().mode = (sfVideoMode){351 * get().screenConfig, 541 * get().screenConfig, 32};
+		get().window = sfRenderWindow_create(get().mode, "GameBoo - Chili Hot Dog Version", sfClose, NULL);
+	}
+	else if(get().screenConfig == 3)
+	{
+		sfVideoMode screenParam = sfVideoMode_getDesktopMode();
 
-    get().window = sfRenderWindow_create(get().mode, "GameBoo - Chili Hot Dog Version", sfClose, NULL);
+		get().mode = (sfVideoMode){screenParam.width, screenParam.height, 32};
+		get().window = sfRenderWindow_create(get().mode, "GameBoo - Chili Hot Dog Version", sfFullscreen, NULL);
+	}
 
+	get().pixelSize = get().get().screenConfig;
+	
     get().myClock = sfClock_create();
 
-    get().gameboySpr = LoadSprite("SPRITES\\gameboy.png", 0);
-    sfSprite_setPosition(get().gameboySpr, (sfVector2f){ 0.0f, 0.0f });
+    if(get().screenConfig == 1)
+    {
+    	get().gameboySpr = LoadSprite("SPRITES\\gameboy.png", 0);
+	    sfSprite_setPosition(get().gameboySpr, (sfVector2f){ 0.0f, 0.0f });
 
-    get().pUp = LoadSprite("SPRITES\\pushed.png", 0);
-    sfSprite_setPosition(get().pUp, (sfVector2f){ 65.0f, 317.0f });
+	    get().pUp = LoadSprite("SPRITES\\pushed.png", 0);
+	    sfSprite_setPosition(get().pUp, (sfVector2f){ 65.0f, 317.0f });
 
-    get().pDown = LoadSprite("SPRITES\\pushed.png", 0);
-    sfSprite_setPosition(get().pDown, (sfVector2f){ 65.0f, 367.0f });
+	    get().pDown = LoadSprite("SPRITES\\pushed.png", 0);
+	    sfSprite_setPosition(get().pDown, (sfVector2f){ 65.0f, 367.0f });
 
-    get().pRight = LoadSprite("SPRITES\\pushed.png", 0);
-    sfSprite_setPosition(get().pRight, (sfVector2f){ 90.0f, 343.0f });
+	    get().pRight = LoadSprite("SPRITES\\pushed.png", 0);
+	    sfSprite_setPosition(get().pRight, (sfVector2f){ 90.0f, 343.0f });
 
-    get().pLeft = LoadSprite("SPRITES\\pushed.png", 0);
-    sfSprite_setPosition(get().pLeft, (sfVector2f){ 40.0f, 343.0f });
+	    get().pLeft = LoadSprite("SPRITES\\pushed.png", 0);
+	    sfSprite_setPosition(get().pLeft, (sfVector2f){ 40.0f, 343.0f });
 
-    get().pSelect = LoadSprite("SPRITES\\pushed.png", 0);
-    sfSprite_setPosition(get().pSelect, (sfVector2f){ 113.0f, 418.0f });
+	    get().pSelect = LoadSprite("SPRITES\\pushed.png", 0);
+	    sfSprite_setPosition(get().pSelect, (sfVector2f){ 113.0f, 418.0f });
 
-    get().pStart = LoadSprite("SPRITES\\pushed.png", 0);
-    sfSprite_setPosition(get().pStart, (sfVector2f){ 166.0f, 418.0f });
+	    get().pStart = LoadSprite("SPRITES\\pushed.png", 0);
+	    sfSprite_setPosition(get().pStart, (sfVector2f){ 166.0f, 418.0f });
 
-    get().pAButton = LoadSprite("SPRITES\\pushed.png", 0);
-    sfSprite_setPosition(get().pAButton, (sfVector2f){ 266.0f, 325.0f });
+	    get().pAButton = LoadSprite("SPRITES\\pushed.png", 0);
+	    sfSprite_setPosition(get().pAButton, (sfVector2f){ 266.0f, 325.0f });
 
-    get().pBButton = LoadSprite("SPRITES\\pushed.png", 0);
-    sfSprite_setPosition(get().pBButton, (sfVector2f){ 220.0f, 349.0f });
+	    get().pBButton = LoadSprite("SPRITES\\pushed.png", 0);
+	    sfSprite_setPosition(get().pBButton, (sfVector2f){ 220.0f, 349.0f });
+    }
+    else if(get().screenConfig == 2)
+    {
+    	get().gameboySpr = LoadSprite("SPRITES\\gameboyX2.png", 0);
+	    sfSprite_setPosition(get().gameboySpr, (sfVector2f){ 0.0f, 0.0f });
 
-    get().screenImg = sfImage_createFromColor(160, 144, sfBlack);
-    get().screenTex = sfTexture_createFromImage(screenImg, NULL);
+	    get().pUp = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    sfSprite_setPosition(get().pUp, (sfVector2f){ 65.0f * 2.0f, 317.0f * 2.0f });
+
+	    get().pDown = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    sfSprite_setPosition(get().pDown, (sfVector2f){ 65.0f * 2.0f, 367.0f * 2.0f});
+
+	    get().pRight = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    sfSprite_setPosition(get().pRight, (sfVector2f){ 90.0f * 2.0f, 343.0f * 2.0f });
+
+	    get().pLeft = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    sfSprite_setPosition(get().pLeft, (sfVector2f){ 40.0f * 2.0f, 343.0f * 2.0f});
+
+	    get().pSelect = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    sfSprite_setPosition(get().pSelect, (sfVector2f){ 113.0f * 2.0f, 418.0f * 2.0f});
+
+	    get().pStart = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    sfSprite_setPosition(get().pStart, (sfVector2f){ 166.0f * 2.0f, 418.0f * 2.0f});
+
+	    get().pAButton = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    sfSprite_setPosition(get().pAButton, (sfVector2f){ 266.0f * 2.0f, 325.0f * 2.0f });
+
+	    get().pBButton = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    sfSprite_setPosition(get().pBButton, (sfVector2f){ 220.0f * 2.0f, 349.0f * 2.0f});
+    }
+
+    
+    get().screenImg = sfImage_createFromColor(160 * get().pixelSize, 144 * get().pixelSize, sfBlack);
+    
+    get().screenTex = sfTexture_createFromImage(get().screenImg, NULL);
     get().screenSpr = sfSprite_create();
     sfSprite_setTexture(get().screenSpr, get().screenTex, sfTrue);
-    sfSprite_setPosition(get().screenSpr, (sfVector2f){ 95.0f, 82.0f });
+
+    if(get().screenConfig == 1)
+    {
+    	sfSprite_setPosition(get().screenSpr, (sfVector2f){ 95.0f, 82.0f });
+    }
+    else if(get().screenConfig == 2)
+    {
+    	sfSprite_setPosition(get().screenSpr, (sfVector2f){ 95.0f * 2.0f, 82.0f * 2.0f });
+    }
+    else if(get().screenConfig == 3)
+    {
+    	int widthGBScreen = get().pixelSize * 160;
+    	int heightGBScreen = get().pixelSize * 144;
+    	sfVideoMode screenParam = sfVideoMode_getDesktopMode();
+    	int x = (screenParam.width / 2) - (widthGBScreen / 2);
+    	int y = (screenParam.height / 2) - (heightGBScreen / 2);
+    	sfSprite_setPosition(get().screenSpr, (sfVector2f){ (float)x, (float)y });
+    }
+}
+
+unsigned int Emu::GetPixelSize()
+{
+	return get().pixelSize;
 }
 
 void Emu::LoadGame()
@@ -255,6 +379,7 @@ void Emu::GetRomInfo()
 	get().MBC1 = false;
 	get().MBC2 = false;
 	get().MBC3 = false;
+	get().MBC5 = false;
 	get().rtc = false;
 
 	switch(get().cartridgeMemory[0x147])
@@ -272,6 +397,12 @@ void Emu::GetRomInfo()
 		case 0x11: get().MBC3 = true; break;
 		case 0x12: get().MBC3 = true; get().activeRam = true; break;
 		case 0x13: get().MBC3 = true; get().activeRam = true; get().activeBattery = true; break;
+		case 0x19: get().MBC5 = true; break;
+		case 0x1A: get().MBC5 = true; get().activeRam = true; break;
+		case 0x1B: get().MBC5 = true; get().activeRam = true; get().activeBattery = true; break;
+		case 0x1C: get().MBC5 = true; break;
+		case 0x1D: get().MBC5 = true; get().activeRam = true; break;
+		case 0x1E: get().MBC5 = true; get().activeRam = true; get().activeBattery = true; break;
         default: break;
 	}
 }
@@ -341,7 +472,7 @@ void Emu::KeyPressed(int key)
 
    if(requestInterupt && !previouslyUnset)
    {
-		get().internalMemory[0xFF0F] |= 0x10;
+		SharpLr::RequestInterrupt(4);
    }
 }
 
@@ -420,7 +551,7 @@ void Emu::HandleInput(){
 		}
 		else if(event.key.code == sfKeyEscape)
 		{
-			quit = true;
+			get().quit = true;
 		}
 		
 		if (key != -1)
@@ -474,7 +605,7 @@ void Emu::HandleInput(){
 		}
 		else if(event.key.code == sfKeyEscape)
 		{
-			quit = true;
+			get().quit = true;
 		}
 		
 		if (key != -1){
@@ -505,13 +636,13 @@ void Emu::FPSChecking()
 
 void Emu::Run()
 {
-	double fps = 59.73;
+	double fps = 60;
 	double interval = 1000;
 	interval /= fps;
 
 	double lastFrameTime = 0;
 
-	while(sfRenderWindow_isOpen(window))
+	while(sfRenderWindow_isOpen(window) && !quit)
 	{
 		while(sfRenderWindow_pollEvent(get().window, &event))
 		{
@@ -542,13 +673,15 @@ void Emu::Update()
 	while(get().loopCounter < MAX_LOOP)
 	{
 		get().cyclesTime = 0;
-		get().cyclesTime += SharpLr::ExecuteNextOpcode();
-		SharpLr::UpdateTimer(get().cyclesTime);
-		Vdp::Update(get().cyclesTime);
-		SharpLr::UpdateInterrupts();
+		
+		get().cyclesTime = SharpLr::ExecuteNextOpcode();
 		get().loopCounter += get().cyclesTime;
+
+		Ppu::Update(get().cyclesTime);
+		SharpLr::UpdateTimer(get().cyclesTime);
+		get().loopCounter += SharpLr::UpdateInterrupts();
 	}
-	Vdp::RenderScreen(get().screenImg, get().screenTex, get().screenSpr, get().window);
+	Ppu::RenderScreen(get().screenImg, get().screenTex, get().screenSpr, get().window);
 	get().RenderGameboy();
 
 	bool stereo = get().apu.end_frame(get().loopCounter);
@@ -565,40 +698,42 @@ void Emu::Update()
 void Emu::RenderGameboy()
 {	
 	sfRenderWindow_clear(window, sfBlack);
-	sfRenderWindow_drawSprite(get().window, get().gameboySpr, NULL);
-	if(get().bpUp)
+	if(get().screenConfig == 1 || get().screenConfig == 2)
 	{
-		sfRenderWindow_drawSprite(get().window, get().pUp, NULL);
+		sfRenderWindow_drawSprite(get().window, get().gameboySpr, NULL);
+		if(get().bpUp)
+		{
+			sfRenderWindow_drawSprite(get().window, get().pUp, NULL);
+		}
+		if(get().bpDown)
+		{
+			sfRenderWindow_drawSprite(get().window, get().pDown, NULL);
+		}
+		if(get().bpLeft)
+		{
+			sfRenderWindow_drawSprite(get().window, get().pLeft, NULL);
+		}
+		if(get().bpRight)
+		{
+			sfRenderWindow_drawSprite(get().window, get().pRight, NULL);
+		}
+		if(get().bpStart)
+		{
+			sfRenderWindow_drawSprite(get().window, get().pStart, NULL);
+		}
+		if(get().bpSelect)
+		{
+			sfRenderWindow_drawSprite(get().window, get().pSelect, NULL);
+		}
+		if(get().bpAButton)
+		{
+			sfRenderWindow_drawSprite(get().window, get().pAButton, NULL);
+		}
+		if(get().bpBButton)
+		{
+			sfRenderWindow_drawSprite(get().window, get().pBButton, NULL);
+		}
 	}
-	if(get().bpDown)
-	{
-		sfRenderWindow_drawSprite(get().window, get().pDown, NULL);
-	}
-	if(get().bpLeft)
-	{
-		sfRenderWindow_drawSprite(get().window, get().pLeft, NULL);
-	}
-	if(get().bpRight)
-	{
-		sfRenderWindow_drawSprite(get().window, get().pRight, NULL);
-	}
-	if(get().bpStart)
-	{
-		sfRenderWindow_drawSprite(get().window, get().pStart, NULL);
-	}
-	if(get().bpSelect)
-	{
-		sfRenderWindow_drawSprite(get().window, get().pSelect, NULL);
-	}
-	if(get().bpAButton)
-	{
-		sfRenderWindow_drawSprite(get().window, get().pAButton, NULL);
-	}
-	if(get().bpBButton)
-	{
-		sfRenderWindow_drawSprite(get().window, get().pBButton, NULL);
-	}
-	
     sfRenderWindow_drawSprite(window, get().screenSpr, NULL);
 	sfRenderWindow_display(get().window);
 }
@@ -619,8 +754,54 @@ byte Emu::ReadDirectMemory(word address)
 
 void Emu::WriteMemory(word address, byte data)
 {
-	
-	if(get().NOROM)
+	get().WriteMapper(address, data);
+}
+
+void Emu::WriteMapper(word address, byte data)
+{
+	if((address >= 0xFEA0) && (address <= 0xFEFF))
+	{
+		//do not write data here, restricted area
+	}
+	else if(address >= apu.start_addr && address <= apu.end_addr)
+	{
+		apu.write_register(get().loopCounter, address, data);
+	}
+	else if(address == 0xFF04)
+	{
+		SharpLr::SetClockFrequence();
+		get().internalMemory[0xFF04] = 0;
+		SharpLr::SetDividerRegister(0);
+	}
+	else if(address == 0xFF07)
+	{
+		byte currentFreq = SharpLr::GetClockFrequence();
+		data |= 0xF8;
+		get().internalMemory[address] = data;
+		byte newFreq = SharpLr::GetClockFrequence();
+
+		if(currentFreq != newFreq)
+		{
+			SharpLr::SetClockFrequence();
+		}
+	}
+	else if(address == 0xFF41)
+	{
+		get().internalMemory[0xFF41] = data | 0x80;
+	}
+	else if(address == 0xFF44)
+    {
+        get().internalMemory[0xFF44] = 0;
+    }
+    else if(0xFF46 == address)
+	{
+        get().DoDMATransfer(data);
+    }
+    else if((address >= 0xFF4C) && (address <= 0xFF7F))
+	{
+ 		//restricted area
+	}
+	else if(get().NOROM)
 	{
 		get().WriteNOROM(address, data);
 	}
@@ -636,14 +817,33 @@ void Emu::WriteMemory(word address, byte data)
 	{
 		get().WriteMBC3(address, data);
 	}
-	
+	else if(get().MBC5)
+	{
+		get().WriteMBC5(address, data);
+	}
 }
 
 
 byte Emu::ReadMemory(word address)
 {
-    
-	if(get().NOROM)
+	return get().ReadMapper(address);	
+}
+
+byte Emu::ReadMapper(word address)
+{
+	if(address == 0xFF00)
+	{
+		return get().GetJoypadState();
+	}
+	else if(address >= apu.start_addr && address <= apu.end_addr)
+	{
+		return apu.read_register(get().loopCounter, address);
+	}
+	else if(address == 0xFF0F)
+	{
+		return get().internalMemory[address] |= 0xE0;
+	}
+	else if(get().NOROM)
 	{
 		return get().ReadNOROM(address);
 	}
@@ -658,6 +858,10 @@ byte Emu::ReadMemory(word address)
 	else if(get().MBC3)
 	{
 		return get().ReadMBC3(address);
+	}
+	else if(get().MBC5)
+	{
+		return get().ReadMBC5(address);
 	}
 	return 0;
 }
@@ -680,7 +884,7 @@ void Emu::WriteNOROM(word address, byte data)
 	}
 	else if((address >= 0xA000) && (address < 0xC000))
 	{
-        if(get().activeRam)
+        if(get().enableRam)
         {
 			word newAddress = address - 0xA000;
 			get().ramBanks[newAddress] = data;
@@ -690,41 +894,6 @@ void Emu::WriteNOROM(word address, byte data)
 	{
 		get().internalMemory[address] = data ;
 		get().internalMemory[address-0x2000] = data ; // echo data into ram address
-	}
- 	else if((address >= 0xFEA0) && (address <= 0xFEFF))
- 	{
- 		//restricted area
-	}
-    else if(0xFF04 == address)
-    {
-        get().internalMemory[0xFF04] = 0;
-		SharpLr::SetDividerRegister(0);
-    }
-	else if(0xFF07 == address)
-	{
-		data |= 0xF8;
-		get().internalMemory[address] = data;
-	}
-	else if(0xFF0F == address)
-	{
-		data |= 0xE0;
-		get().internalMemory[address] = data;
-	}
-	else if(address >= apu.start_addr && address <= apu.end_addr)
-	{
-		apu.write_register(get().loopCounter, address, data);
-	}
-    else if(0xFF44 == address)
-    {
-        get().internalMemory[0xFF44] = 0;
-    }
-	else if(0xFF46 == address)
-	{
-        get().DoDMATransfer(data);
-    }
-	else if ((address >= 0xFF4C) && (address <= 0xFF7F))
-	{
- 		//restricted area
 	}
 	else
 	{
@@ -739,14 +908,6 @@ byte Emu::ReadNOROM(word address)
         word newAddress = address - 0xA000;
         return get().ramBanks[newAddress + (get().currentRamBank * 0x2000)];
     }
-	else if(0xFF00 == address)
-	{
-		return get().GetJoypadState();
-	}
-	else if(address >= apu.start_addr && address <= apu.end_addr)
-	{
-		return apu.read_register(get().loopCounter, address);
-	}
 	else
 	{
 		return get().internalMemory[address];
@@ -759,25 +920,25 @@ void Emu::WriteMBC1(word address, byte data)
 	{
 		if((data & 0xF) == 0xA)
 		{
-			get().activeRam = true;
+			get().enableRam = true;
 		}
-		else if(data == 0x0)
+		else if((data & 0xF) == 0x0)
 		{
-			get().activeRam = false;
+			get().enableRam = false;
 		}
 	}
 	else if((address >= 0x2000) && (address < 0x4000))
 	{
-		if(data == 0x00)
-		{
-			data++;
-		}
-
 		data &= 0x1F;
 
 		get().currentRomBank &= 0xE0;
 
 		get().currentRomBank |= data;
+
+		if(get().currentRomBank == 0x00 || get().currentRomBank == 0x20 || get().currentRomBank == 0x40 || get().currentRomBank == 0x60)
+		{
+			get().currentRomBank++;
+		}
 	}
 	else if((address >= 0x4000) && (address < 0x6000))
 	{
@@ -822,7 +983,7 @@ void Emu::WriteMBC1(word address, byte data)
 	}
 	else if((address >= 0xA000) && (address < 0xC000))
 	{
-		if(get().activeRam)
+		if(get().enableRam)
 		{
 			word newAdress = address - 0xA000;
 			get().ramBanks[newAdress + (get().currentRamBank * 0x2000)] = data;
@@ -832,41 +993,6 @@ void Emu::WriteMBC1(word address, byte data)
 	{
 		get().internalMemory[address] = data;
 		get().internalMemory[address - 0x2000] = data; // mirroring
-	}
-	else if((address >= 0xFEA0) && (address <= 0xFEFF))
-	{
-		//do not write data here, restricted area
-	}
-	else if(address == 0xFF04)
-	{
-		get().internalMemory[0xFF04] = 0;
-		SharpLr::SetDividerRegister(0);
-	}
-	else if(address == 0xFF07)
-	{
-		data |= 0xF8;
-		get().internalMemory[address] = data;
-	}
-	else if(address == 0xFF0F)
-	{
-		data |= 0xE0;
-		get().internalMemory[address] = data;
-	}
-	else if(address >= apu.start_addr && address <= apu.end_addr)
-	{
-		apu.write_register(get().loopCounter, address, data);
-	}
-	else if(address == 0xFF44)
-	{
-		get().internalMemory[0xFF44] = 0;
-	}
-	else if(address == 0xFF46)
-	{
-		get().DoDMATransfer(data);
-	}
-	else if((address >= 0xFF4C) && (address <= 0xFF7F))
-	{
-		//do not write data here, restricted area
 	}
 	else
 	{
@@ -885,14 +1011,6 @@ byte Emu::ReadMBC1(word address)
 	{
 		word newAdress = address - 0xA000;
 		return get().ramBanks[newAdress + (get().currentRamBank * 0x2000)];
-	}
-	else if(address == 0xFF00)
-	{
-		return get().GetJoypadState();
-	}
-    else if(address >= apu.start_addr && address <= apu.end_addr)
-	{
-		return apu.read_register(get().loopCounter, address);
 	}
 	else
 	{
@@ -942,41 +1060,6 @@ void Emu::WriteMBC2(word address, byte data)
 		get().internalMemory[address] = data;
 		get().internalMemory[address - 0x2000] = data;
 	}
-	else if((address >= 0xFEA0) && (address <= 0xFEFF))
-	{
-		//restricted area
-	}
-	else if(address == 0xFF04)
-	{
-		get().internalMemory[0xFF04] = 0;
-		SharpLr::SetDividerRegister(0);
-	}
-	else if(address == 0xFF07)
-	{
-		data |= 0xF8;
-		get().internalMemory[address] = data;
-	}
-	else if(address == 0xFF0F)
-	{
-		data |= 0xE0;
-		get().internalMemory[address] = data;
-	}
-	else if(address >= apu.start_addr && address <= apu.end_addr)
-	{
-		apu.write_register(get().loopCounter, address, data);
-	}
-	else if(address == 0xFF44)
-	{
-		get().internalMemory[0xFF44] = 0;
-	}
-	else if(address == 0xFF46)
-	{
-		get().DoDMATransfer(data);
-	}
-	else if((address >= 0xFF4C) && (address <= 0xFF7F))
-	{
-		//restricted area
-	}
 	else
 	{
 		get().internalMemory[address] = data;
@@ -994,14 +1077,6 @@ byte Emu::ReadMBC2(word address)
 	{
 		word newAdress = address - 0xA000;
 		return get().ramBanks[newAdress + (get().currentRamBank * 0x2000)];
-	}
-	else if(address == 0xFF00)
-	{
-		return get().GetJoypadState();
-	}
-	else if(address >= apu.start_addr && address <= apu.end_addr)
-	{
-		return apu.read_register(get().loopCounter, address);
 	}
 	else
 	{
@@ -1056,14 +1131,8 @@ void Emu::WriteMBC3(word address, byte data)
 	{
 		if((data & 0xF) == 0xA)
 		{
-            if(get().activeRam)
-            {
-				get().enableRam = true;
-			}
-			if(get().rtc)
-			{
-				get().rtcEnabled = true;
-			}
+			get().enableRam = true;
+			get().rtcEnabled = true;
 		}
 		else
 		{
@@ -1127,41 +1196,6 @@ void Emu::WriteMBC3(word address, byte data)
 		get().internalMemory[address] = data ;
 		get().internalMemory[address - 0x2000] = data ; // echo data into ram address
 	}
-	else if((address >= 0xFEA0) && (address <= 0xFEFF))
-	{
- 		//restricted area
-	}
-    else if(address == 0xFF04)
-    {
-        get().internalMemory[0xFF04] = 0;
-		SharpLr::SetDividerRegister(0);
-    }
-	else if(address == 0xFF07)
-	{
-		data |= 0xF8;
-		get().internalMemory[address] = data;
-	}
-	else if(address == 0xFF0F)
-	{
-		data |= 0xE0;
-		get().internalMemory[address] = data;
-	}
-	else if(address >= apu.start_addr && address <= apu.end_addr)
-	{
-		apu.write_register(get().loopCounter, address, data);
-	}
-    else if(address == 0xFF44)
-    {
-        get().internalMemory[0xFF44] = 0;
-    }
-	else if(address == 0xFF46)
-	{
-        get().DoDMATransfer(data);
-    }
-	else if((address >= 0xFF4C) && (address <= 0xFF7F))
-	{
- 		//restricted area
-	}
 	else
 	{
 		get().internalMemory[address] = data;
@@ -1191,18 +1225,71 @@ byte Emu::ReadMBC3(word address)
 			return 0x00;
 		}
     }
-	else if (address == 0xFF00)
-	{
-		return get().GetJoypadState();
-	}
-	else if(address >= apu.start_addr && address <= apu.end_addr)
-	{
-		return apu.read_register(get().loopCounter, address);
-	}
 	else
 	{
 		return get().internalMemory[address];
 	}
 }
 
+void Emu::WriteMBC5(word address, byte data)
+{
+	if(address < 0x2000)
+	{
+		if((data & 0xF) == 0xA)
+		{
+			get().enableRam = true;
+		}
+		else if((data & 0xF) == 0x0)
+		{
+			get().enableRam = false;
+		}
+	}
+	else if((address >= 0x2000) && (address < 0x3000))
+	{
+		get().currentRomBank = (get().currentRomBank & 0x100) | data;
+	}
+	else if((address >= 0x3000) && (address < 0x4000))
+	{
+		get().currentRomBank = (get().currentRomBank & 0xFF) | (data & 0x01) << 8;
+	}
+	else if((address >= 0x4000) && (address < 0x6000))
+	{
+		get().currentRamBank = data & 0xF;
+	}
+	else if((address >= 0xA000) && (address < 0xC000))
+	{
+		if(get().enableRam)
+		{
+			word newAdress = address - 0xA000;
+			get().ramBanks[newAdress + (get().currentRamBank * 0x2000)] = data;
+		}
+	}
+	else if((address >= 0xE000) && (address <= 0xFDFF))
+	{
+		get().internalMemory[address] = data;
+		get().internalMemory[address - 0x2000] = data; // mirroring
+	}
+	else
+	{
+		get().internalMemory[address] = data;
+	}
+}
+
+byte Emu::ReadMBC5(word address)
+{
+	if((address >= 0x4000) && (address <= 0x7FFF))
+	{
+		word newAdress = address - 0x4000;
+		return get().cartridgeMemory[newAdress +(get().currentRomBank * 0x4000)];
+	}
+	else if((address >= 0xA000) && (address <= 0xBFFF))
+	{
+		word newAdress = address - 0xA000;
+		return get().ramBanks[newAdress + (get().currentRamBank * 0x2000)];
+	}
+	else
+	{
+		return get().internalMemory[address];
+	}
+}
 

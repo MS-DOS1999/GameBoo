@@ -5,9 +5,10 @@
 
 #include <ctime>
 #include <iostream>
+#include <fstream>
+#include <string>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <windows.h>
 #include <SFML/Config.h>
@@ -19,7 +20,7 @@
 
 #include "../BITS/bitsUtils.hpp"
 #include "../CPU/sharpLr.hpp"
-#include "../VDP/vdp.hpp"
+#include "../PPU/ppu.hpp"
 #include "../APU/gb_apu/Gb_Apu.h"
 #include "../APU/gb_apu/Multi_Buffer.h"
 #include "../APU/Sound_Queue.h"
@@ -29,8 +30,11 @@ class Emu
 public:
 	//method
 	Emu();
+	static unsigned int GetPixelSize();
+	static char GetLcdColor();
 	static void Intro();
 	static void PlayMusic();
+	static void GetConfig();
 	static void HideCMD();
 	static void FileBrowser();
 	static void StopMusic();
@@ -41,6 +45,10 @@ public:
 	static byte ReadMemory(word address);
 
 private:
+
+	//config
+	unsigned int screenConfig;
+	char lcdColor;
 
 	//sfml var
 	sfRenderWindow* window;
@@ -62,6 +70,8 @@ private:
     sfSprite* pBButton;
 
     sfMusic* kidZan;
+
+    unsigned int pixelSize;
 
 	//var
     bool bpUp;
@@ -93,6 +103,7 @@ private:
 	bool MBC1;
 	bool MBC2;
 	bool MBC3;
+	bool MBC5;
 
 	byte cartridgeMemory[0x200000];
 	byte internalMemory[0x10000];
@@ -136,6 +147,8 @@ private:
 	void Update();
 	void RenderGameboy();
 
+	void WriteMapper(word address, byte data);
+	byte ReadMapper(word address);
 	void DoDMATransfer(byte data);
 	void WriteNOROM(word address, byte data);
 	byte ReadNOROM(word address);
@@ -146,6 +159,8 @@ private:
 	void GrabTime();
 	void WriteMBC3(word address, byte data);
 	byte ReadMBC3(word address);
+	void WriteMBC5(word address, byte data);
+	byte ReadMBC5(word address);
 };
 
 

@@ -22,11 +22,12 @@ void SharpLr::Init()
 
 	get().timerCounter = 0;
 	get().timerSpeed = 1024;
-	get().interruptMaster = false;
-	get().interruptDelay = false;
+	
+	get().enableInterrupts = false;
+	get().InterruptsOn = false;
+
 	get().dividerRegister = 0;
 	get().halted = false;
-	get().skipInstruction = false;
 }
 
 void SharpLr::PushWord(word value)
@@ -75,13 +76,18 @@ void SharpLr::UpdateTimer(int cycles)
 
 		if(get().timerCounter >= get().timerSpeed)
 		{
-			Emu::WriteDirectMemory(TIMA, Emu::ReadDirectMemory(TIMA) + 1);
+			
 			get().timerCounter -= get().timerSpeed;
+			byte tima = Emu::ReadMemory(TIMA);
 
-			if(Emu::ReadDirectMemory(TIMA) == 0)
+			if(tima == 0xFF)
 			{
-				Emu::WriteDirectMemory(0xFF0F, Emu::ReadDirectMemory(0xFF0F) | 0x04);
-				Emu::WriteDirectMemory(TIMA, Emu::ReadDirectMemory(TMA));
+				Emu::WriteDirectMemory(TIMA, Emu::ReadMemory(TMA));
+				get().RequestInterrupt(2);
+			}
+			else
+			{
+				Emu::WriteDirectMemory(TIMA, tima + 1);
 			}
 		}
 	}
@@ -128,95 +134,94 @@ void SharpLr::DoDividerRegister(int cycles)
 	}
 }
 
-void SharpLr::UpdateInterrupts()
+void SharpLr::RequestInterrupt(int interrupt)
 {
-	if(get().interruptDelay)
+	byte req = Emu::ReadMemory(0xFF0F);
+	req = BitSet(req, interrupt);
+	Emu::WriteMemory(0xFF0F, req);
+}
+
+int SharpLr::UpdateInterrupts()
+{
+	if(get().enableInterrupts)
 	{
-		get().interruptDelay = false;
-		get().interruptMaster = true;
+		get().InterruptsOn = true;
+		get().enableInterrupts = false;
+		return 0;
 	}
-	else if(get().interruptMaster)
+	if(!get().InterruptsOn && !get().halted)
 	{
-		//Vblank Interrupt
-		if((Emu::ReadDirectMemory(0xFFFF) & 0x1) && (Emu::ReadDirectMemory(0xFF0F) & 0x1))
-		{
-			get().interruptMaster = false;
-			get().halted = false;
-			Emu::WriteDirectMemory(0xFF0F, Emu::ReadDirectMemory(0xFF0F) & ~0x01);
-			get().PushWord(get().programCounter);
-			get().programCounter = 0x40;
-		}
+		return 0;
+	}
 
-		//LCD Status Interrupt
-		if((Emu::ReadDirectMemory(0xFFFF) & 0x2) && (Emu::ReadDirectMemory(0xFF0F) & 0x2))
-		{
-			get().interruptMaster = false;
-			get().halted = false;
-			Emu::WriteDirectMemory(0xFF0F, Emu::ReadDirectMemory(0xFF0F) & ~0x02);
-			get().PushWord(get().programCounter);
-			get().programCounter = 0x48;
-		}
+	byte req = Emu::ReadMemory(0xFF0F);
+	byte enabled = Emu::ReadMemory(0xFFFF);
 
-		//Timer Overflow Interrupt
-		if((Emu::ReadDirectMemory(0xFFFF) & 0x4) && (Emu::ReadDirectMemory(0xFF0F) & 0x4))
+	if(req > 0)
+	{
+		int i;
+		for(i = 0; i < 5; i++)
 		{
-			get().interruptMaster = false;
-			get().halted = false;
-			Emu::WriteDirectMemory(0xFF0F, Emu::ReadDirectMemory(0xFF0F) & ~0x04);
-			get().PushWord(get().programCounter);
-			get().programCounter = 0x50;
-		}
-
-		//Serial Interrupt
-		if((Emu::ReadDirectMemory(0xFFFF) & 0x8) && (Emu::ReadDirectMemory(0xFF0F) & 0x8))
-		{
-			get().interruptMaster = false;
-			get().halted = false;
-			Emu::WriteDirectMemory(0xFF0F, Emu::ReadDirectMemory(0xFF0F) & ~0x08);
-			get().PushWord(get().programCounter);
-			get().programCounter = 0x58;
-		}
-
-		//Joypad Interrupt
-		if((Emu::ReadDirectMemory(0xFFFF) & 0x10) && (Emu::ReadDirectMemory(0xFF0F) & 0x10))
-		{
-			get().interruptMaster = false;
-			get().halted = false;
-			Emu::WriteDirectMemory(0xFF0F, Emu::ReadDirectMemory(0xFF0F) & ~0x10);
-			get().PushWord(get().programCounter);
-			get().programCounter = 0x60;
+			if(TestBit(req, i) && TestBit(enabled, i))
+			{
+				get().ServiceInterrupt(i);
+				return 20;
+			}
 		}
 	}
-	else if((Emu::ReadDirectMemory(0xFF0F) & Emu::ReadDirectMemory(0xFFFF) & 0x1F) && (!get().skipInstruction))
+	return 0;
+}
+
+void SharpLr::ServiceInterrupt(int interrupt)
+{
+	if(!get().InterruptsOn && get().halted)
 	{
 		get().halted = false;
+		return;
 	}
+
+	get().InterruptsOn = false;
+	get().halted = false;
+
+	byte req = Emu::ReadMemory(0xFF0F);
+	req = BitClear(req, interrupt);
+	Emu::WriteMemory(0xFF0F, req);
+
+	get().PushWord(get().programCounter);
+
+	if(interrupt == 0)
+	{
+		get().programCounter = 0x40;
+	}
+	else if(interrupt == 1)
+	{
+		get().programCounter = 0x48;
+	}
+	else if(interrupt == 2)
+	{
+		get().programCounter = 0x50;
+	}
+	else if(interrupt == 3)
+	{
+		get().programCounter = 0x58;
+	}
+	else if(interrupt == 4)
+	{
+		get().programCounter = 0x60;
+	}
+
 }
 
 int SharpLr::ExecuteNextOpcode()
 {
 	byte opcode = Emu::ReadMemory(get().programCounter);
-	int OpcodeCycles = 0;
+	int OpcodeCycles = 4;
 	if(!get().halted)
 	{
 		get().programCounter++;
 		OpcodeCycles = get().ExecuteOpcode(opcode);
 	}
-	else
-	{
-		if(get().interruptMaster || !get().skipInstruction)
-		{
-			OpcodeCycles = 4;
-		}
-		else if(get().skipInstruction)
-		{
-			get().halted = false;
-			get().skipInstruction = false;
-
-			OpcodeCycles = get().ExecuteOpcode(opcode);
-		}
-	}
-
+	
 	return OpcodeCycles;
 }
 
@@ -967,19 +972,6 @@ int SharpLr::ExecuteOpcode(byte opcode)
 		{
 			OpcodeCycles = 4;
 			get().halted = true;
-
-			bool tempSkip = false;
-
-			if((Emu::ReadDirectMemory(0xFFFF) & Emu::ReadDirectMemory(0xFF0F) & 0x1F) && (!get().interruptMaster))
-			{
-				tempSkip = true;
-			}
-			else
-			{
-				tempSkip = false;
-			}
-
-			get().skipInstruction = tempSkip;
 			break;
 		}
 		case 0x77:
@@ -1568,7 +1560,7 @@ int SharpLr::ExecuteOpcode(byte opcode)
 		{
 			OpcodeCycles = 8;
 			get().programCounter = get().PopWord();
-			get().interruptMaster = true;
+			get().enableInterrupts = true;
 			break;
 		}
 		case 0xDA:
@@ -1694,7 +1686,7 @@ int SharpLr::ExecuteOpcode(byte opcode)
 		case 0xF3:
 		{
 			OpcodeCycles = 4;
-			get().interruptMaster = false;
+			get().InterruptsOn = false;
 			break;
 		}
 		case 0xF5:
@@ -1742,7 +1734,7 @@ int SharpLr::ExecuteOpcode(byte opcode)
 		case 0xFB:
 		{
 			OpcodeCycles = 4;
-			get().interruptDelay = true;
+			get().enableInterrupts = true;
 			break;
 		}
 		case 0xFE:

@@ -3,6 +3,7 @@
 
 #include "../BITS/bitsUtils.hpp"
 #include "../GameBoy/emu.hpp"
+#include "../CPU/sharpLr.hpp"
 
 typedef enum
 {
@@ -18,11 +19,11 @@ typedef struct
 	byte color;
 }Pixel;
 
-class Vdp
+class Ppu
 {
 public:
 	//method
-	Vdp();
+	Ppu();
 	static void Update(int cycles);
 	static void RenderScreen(sfImage* screenImg, sfTexture* screenTex, sfSprite* screenSpr, sfRenderWindow* window);
 
@@ -32,16 +33,19 @@ private:
 	sfColor pixelColor[4];
 
 	int scanlineCounter;
+	byte lastDrawnScanline;
+	byte tileScanline[160];
 
-	static Vdp& get(void);
+
+	static Ppu& get(void);
 
 	//method
 	void SetLcdStatus();
 	bool IsLcdEnabled();
-	void DrawScanline();
-	void RenderTiles(byte control);
+	void DrawScanline(byte scanline);
+	void RenderTiles(byte control, byte scanline);
 	Color GetColor(byte colorNum, word address);
-	void RenderSprites(byte control);
+	void RenderSprites(byte control, byte scanline);
 };
 
 

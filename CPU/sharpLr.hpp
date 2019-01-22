@@ -30,8 +30,11 @@ public:
 
 	SharpLr();
 	static void Init();
+	static void SetClockFrequence();
+	static byte GetClockFrequence();
 	static void UpdateTimer(int cycles);
-	static void UpdateInterrupts();
+	static void RequestInterrupt(int interrupt);
+	static int UpdateInterrupts();
 	static int ExecuteNextOpcode();
 
 	static void SetDividerRegister(int value);
@@ -50,10 +53,8 @@ private:
 	int timerSpeed;
 	int dividerRegister;
 
-	bool interruptDelay;
-	bool interruptMaster;
-
-	bool skipInstruction;
+	bool enableInterrupts;
+	bool InterruptsOn;
 
 	bool halted;
 
@@ -65,9 +66,9 @@ private:
 	byte FetchByte();
 
 	bool IsClockEnabled();
-	byte GetClockFrequence();
-	void SetClockFrequence();
 	void DoDividerRegister(int cycles);
+
+	void ServiceInterrupt(int interrupt);
 
 	int ExecuteOpcode(byte opcode);
 	int ExecuteExtendedOpcode();

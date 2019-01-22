@@ -1,2 +1,2 @@
-g++ -g -Wall GameBoy\emu.cpp CPU\SharpLr.cpp VDP\vdp.cpp APU\Sound_Queue.cpp APU\gb_apu\Blip_Buffer.cpp APU\gb_apu\Gb_Apu.cpp APU\gb_apu\Gb_Oscs.cpp APU\gb_apu\Multi_Buffer.cpp -o GameBoo.exe -lmingw32 -lcomdlg32 -lSDLmain -lSDL sfml\*.a *.dll -Wno-write-strings -Wno-sign-compare -Wno-unused-value -Wno-switch -static-libgcc -static-libstdc++
+g++ -Wall GameBoy\emu.cpp CPU\sharpLr.cpp PPU\ppu.cpp APU\Sound_Queue.cpp APU\gb_apu\Blip_Buffer.cpp APU\gb_apu\Gb_Apu.cpp APU\gb_apu\Gb_Oscs.cpp APU\gb_apu\Multi_Buffer.cpp -o GameBoo.exe -lmingw32 -lcomdlg32 -lSDLmain -lSDL sfml\*.a *.dll -Wno-write-strings -Wno-sign-compare -Wno-unused-value -Wno-switch -static-libgcc -static-libstdc++
 pause
