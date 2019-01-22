@@ -33,6 +33,8 @@ G:::::G        G::::G a::::aaaa::::::a m::::m   m::::m   m::::me::::::eeeeeeeeee
 GameBoo is a Windows Nintendo GameBoy Color emulator written in C++/C/SFML/SDL.
 The emulator can run the majority of GB games.
 
+<img src="Images/pokemonred.PNG" width="353"><img src="Images/zelda.PNG" width="353"><img src="Images/finalfantasy.PNG" width="353"><img src="Images/pokemonsilver.PNG" width="353">
+
 ## Installation
 
 Download the [latest release](https://github.com/MS-DOS1999/GameBoo/releases/tag/V3-Chili_Hot_Dog) of GameBoo from the releases page.
@@ -58,11 +60,30 @@ Other options:
 
   You can go in CONFIG/ and change values in config.txt
 
+## Joypad/Input
+<kbd>Z</kbd> - Up<br/>
+<kbd>Q</kbd> - Left<br/>
+<kbd>S</kbd> - Down<br/>
+<kbd>D</kbd> - Right<br/>
+<kbd>SpaceBar</kbd> - Select<br/>
+<kbd>A</kbd> - Start<br/>
+<kbd>O</kbd> - A<br/>
+<kbd>K</kbd> - B<br/>
+<kbd>Esc</kbd> - Quit Emulator<br/>
+
+## Filter/Lcd Colors
+
+You can choose different filter like Original Gameboy, Gameboy Pocket, Used Gameboy.
+
+<img src="Images/filtre0.PNG" width="353"><img src="Images/filtre1.PNG" width="353"><img src="Images/filtre2.PNG" width="353">
+
 ### Saving 
-If the loaded rom supports battery a `<rom-name>.sav` (e.g. `pokemonRed.sav`) file will be created.
+If the loaded rom supports battery a `<rom-name>.sav` (e.g. `pokemonRed.sav`) file will be created at Emulator exit.
 
 ## Testing
 GameBoo currently passes all of the tests in Blargg's `cpu_instrs` test rom.
+
+<img src="Images/test.PNG" width="353">
 
 ## Resources
 Resources were used to understand and test the GameBoy hardware. Some of these include:
