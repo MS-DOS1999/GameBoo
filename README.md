@@ -32,3 +32,43 @@ G:::::G        G::::G a::::aaaa::::::a m::::m   m::::m   m::::me::::::eeeeeeeeee
 
 GameBoo is a Windows Nintendo GameBoy Color emulator written in C++/C/SFML/SDL.
 The emulator can run the majority of GB games.
+
+## Installation
+
+Download the [latest release](https://github.com/MS-DOS1999/GameBoo/releases/tag/V3-Chili_Hot_Dog) of GameBoo from the releases page.
+
+### Building from source
+
+Download or clone this repo, and run:
+```sh
+git clone https://github.com/MS-DOS1999/GameBoo.git
+cd GameBoo
+compile.bat
+```
+You need G++ MinGW
+And CSFML, SDL 1.2 lib
+
+GameBoo is compatible only on Windows
+
+## Usage
+
+Just launch GameBoo.exe and select your favorite game
+
+Other options:
+
+  You can go in CONFIG/ and change values in config.txt
+
+### Saving 
+If the loaded rom supports battery a `<rom-name>.sav` (e.g. `pokemonRed.sav`) file will be created.
+
+## Testing
+GameBoo currently passes all of the tests in Blargg's `cpu_instrs` test rom.
+
+## Resources
+Resources were used to understand and test the GameBoy hardware. Some of these include:
+* <http://www.codeslinger.co.uk/pages/projects/gameboy/files/GB.pdf>
+* <http://www.codeslinger.co.uk/pages/projects/gameboy/beginning.html>
+* <http://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html>
+* <https://gekkio.fi/files/gb-docs/gbctr.pdf>
+* <http://gbdev.gg8.se/wiki/articles/Pan_Docs>
+* <https://github.com/Humpheh/goboy>

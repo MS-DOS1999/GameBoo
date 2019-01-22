@@ -9,7 +9,7 @@ LcdColor=0;
 ScreenSize :
 	1 -> Original screen size (160x144)
 	2 -> Double Screen size (320x288)
-	3 -> FullScreen
+	3 -> FullScreen (in this mode, use Escape key to exit Emulator)
 
 LcdColor :
 	0 -> GameBoy ColorScreen (Original Hex Value)
