@@ -37,7 +37,7 @@ The emulator can run the majority of GB games.
 
 ## Installation
 
-Download the [latest release](https://github.com/MS-DOS1999/GameBoo/releases/tag/V3-Chili_Hot_Dog) of GameBoo from the releases page.
+Download the [latest release](https://github.com/MS-DOS1999/GameBoo/releases/tag/Chili_Hot_Dog) of GameBoo from the releases page.
 
 ### Building from source
 
