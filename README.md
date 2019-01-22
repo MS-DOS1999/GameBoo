@@ -29,3 +29,6 @@ G:::::G        G::::G a::::aaaa::::::a m::::m   m::::m   m::::me::::::eeeeeeeeee
   Chiptune used for intro and file selection composed by Kid Zan
   Original Gameboy pixel art by ENSELLITIS
  ```
+
+GameBoo is a Windows Nintendo GameBoy Color emulator written in C++/C/SFML/SDL.
+The emulator can run the majority of GB games.

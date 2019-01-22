@@ -73,6 +73,8 @@ private:
 
     unsigned int pixelSize;
 
+    std::string fullPath;
+
 	//var
     bool bpUp;
     bool bpDown;

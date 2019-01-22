@@ -5,7 +5,7 @@ int main(int argc, char **argv)
 	Emu::Intro();
 	Emu::PlayMusic();
 	Emu::GetConfig();
-	Emu::HideCMD();
+	//Emu::HideCMD();
 	Emu::FileBrowser();
 	Emu::StopMusic();
 	Emu::Execute();
@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-sfSprite* LoadSprite(char* _sNom, int _isCentered)
+sfSprite* LoadSprite(const char* _sNom, int _isCentered)
 {
     sfSprite* spriteTemp;
     sfTexture* textureTemp;
@@ -93,6 +93,10 @@ Emu::Emu()
     this->internalMemory[0xFFFF] = 0x00;
 
     this->enableRam = false;
+
+    char path[2048];
+	GetCurrentDirectory(2048, path);
+	this->fullPath = path;
 }
 
 Emu& Emu::get(void)
@@ -107,7 +111,8 @@ char Emu::GetLcdColor()
 
 void Emu::GetConfig()
 {
-	std::ifstream input("CONFIG\\config.txt");
+	std::string add = get().fullPath + "/CONFIG/config.txt";
+	std::ifstream input(add);
 	for(int i = 0; i < 2; i++)
 	{
 		std::string id;
@@ -192,7 +197,8 @@ G:::::G        G::::G a::::aaaa::::::a m::::m   m::::m   m::::me::::::eeeeeeeeee
 
 void Emu::PlayMusic()
 {
-	get().kidZan = sfMusic_createFromFile("MUSIC\\kid_zan.ogg");
+	std::string add = get().fullPath + "/MUSIC/kid_zan.ogg";
+	get().kidZan = sfMusic_createFromFile(add.c_str());
 	sfMusic_play(get().kidZan);
 	Sleep(6000);
 }
@@ -263,60 +269,64 @@ void Emu::InitSFML()
 
     if(get().screenConfig == 1)
     {
-    	get().gameboySpr = LoadSprite("SPRITES\\gameboy.png", 0);
+    	std::string add = fullPath + "/SPRITES/gameboy.png";
+    	get().gameboySpr = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().gameboySpr, (sfVector2f){ 0.0f, 0.0f });
 
-	    get().pUp = LoadSprite("SPRITES\\pushed.png", 0);
+	    add = fullPath + "/SPRITES/pushed.png";
+	    get().pUp = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pUp, (sfVector2f){ 65.0f, 317.0f });
 
-	    get().pDown = LoadSprite("SPRITES\\pushed.png", 0);
+	    get().pDown = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pDown, (sfVector2f){ 65.0f, 367.0f });
 
-	    get().pRight = LoadSprite("SPRITES\\pushed.png", 0);
+	    get().pRight = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pRight, (sfVector2f){ 90.0f, 343.0f });
 
-	    get().pLeft = LoadSprite("SPRITES\\pushed.png", 0);
+	    get().pLeft = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pLeft, (sfVector2f){ 40.0f, 343.0f });
 
-	    get().pSelect = LoadSprite("SPRITES\\pushed.png", 0);
+	    get().pSelect = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pSelect, (sfVector2f){ 113.0f, 418.0f });
 
-	    get().pStart = LoadSprite("SPRITES\\pushed.png", 0);
+	    get().pStart = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pStart, (sfVector2f){ 166.0f, 418.0f });
 
-	    get().pAButton = LoadSprite("SPRITES\\pushed.png", 0);
+	    get().pAButton = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pAButton, (sfVector2f){ 266.0f, 325.0f });
 
-	    get().pBButton = LoadSprite("SPRITES\\pushed.png", 0);
+	    get().pBButton = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pBButton, (sfVector2f){ 220.0f, 349.0f });
     }
     else if(get().screenConfig == 2)
     {
-    	get().gameboySpr = LoadSprite("SPRITES\\gameboyX2.png", 0);
+    	std::string add = fullPath + "/SPRITES/gameboyX2.png";
+    	get().gameboySpr = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().gameboySpr, (sfVector2f){ 0.0f, 0.0f });
 
-	    get().pUp = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    add = fullPath + "/SPRITES/pushedX2.png";
+	    get().pUp = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pUp, (sfVector2f){ 65.0f * 2.0f, 317.0f * 2.0f });
 
-	    get().pDown = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    get().pDown = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pDown, (sfVector2f){ 65.0f * 2.0f, 367.0f * 2.0f});
 
-	    get().pRight = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    get().pRight = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pRight, (sfVector2f){ 90.0f * 2.0f, 343.0f * 2.0f });
 
-	    get().pLeft = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    get().pLeft = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pLeft, (sfVector2f){ 40.0f * 2.0f, 343.0f * 2.0f});
 
-	    get().pSelect = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    get().pSelect = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pSelect, (sfVector2f){ 113.0f * 2.0f, 418.0f * 2.0f});
 
-	    get().pStart = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    get().pStart = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pStart, (sfVector2f){ 166.0f * 2.0f, 418.0f * 2.0f});
 
-	    get().pAButton = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    get().pAButton = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pAButton, (sfVector2f){ 266.0f * 2.0f, 325.0f * 2.0f });
 
-	    get().pBButton = LoadSprite("SPRITES\\pushedX2.png", 0);
+	    get().pBButton = LoadSprite(add.c_str(), 0);
 	    sfSprite_setPosition(get().pBButton, (sfVector2f){ 220.0f * 2.0f, 349.0f * 2.0f});
     }
 
