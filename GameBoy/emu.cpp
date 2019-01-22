@@ -5,7 +5,7 @@ int main(int argc, char **argv)
 	Emu::Intro();
 	Emu::PlayMusic();
 	Emu::GetConfig();
-	//Emu::HideCMD();
+	Emu::HideCMD();
 	Emu::FileBrowser();
 	Emu::StopMusic();
 	Emu::Execute();
