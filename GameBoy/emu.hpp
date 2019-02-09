@@ -33,11 +33,8 @@ public:
 	static unsigned int GetPixelSize();
 	static char GetLcdColor();
 	static void Intro();
-	static void PlayMusic();
 	static void GetConfig();
-	static void HideCMD();
 	static void FileBrowser();
-	static void StopMusic();
 	static void Execute();
 	static void WriteDirectMemory(word address, byte data);
 	static byte ReadDirectMemory(word address);
@@ -68,8 +65,6 @@ private:
     sfSprite* pStart;
     sfSprite* pAButton;
     sfSprite* pBButton;
-
-    sfMusic* kidZan;
 
     unsigned int pixelSize;
 

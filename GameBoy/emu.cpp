@@ -3,11 +3,8 @@
 int main(int argc, char **argv)
 {
 	Emu::Intro();
-	Emu::PlayMusic();
 	Emu::GetConfig();
-	Emu::HideCMD();
 	Emu::FileBrowser();
-	Emu::StopMusic();
 	Emu::Execute();
 
 	return 0;
@@ -195,20 +192,6 @@ G:::::G        G::::G a::::aaaa::::::a m::::m   m::::m   m::::me::::::eeeeeeeeee
 	std::cout << "Original Gameboy pixel art by ENSELLITIS" << std::endl;
 }
 
-void Emu::PlayMusic()
-{
-	std::string add = get().fullPath + "/MUSIC/kid_zan.ogg";
-	get().kidZan = sfMusic_createFromFile(add.c_str());
-	sfMusic_play(get().kidZan);
-	Sleep(6000);
-}
-
-void Emu::HideCMD()
-{
-	HWND hWnd = GetConsoleWindow(); 
-    ShowWindow(hWnd, SW_HIDE);
-}
-
 void Emu::FileBrowser()
 {
 	OPENFILENAME ofn;
@@ -225,20 +208,15 @@ void Emu::FileBrowser()
     GetOpenFileNameA(&ofn);
 }
 
-void Emu::StopMusic()
+void Emu::Execute()
 {
-	sfMusic_stop(get().kidZan);
-
 	//init APU
 	get().buf.set_sample_rate(44100);
 	get().buf.clock_rate(4194304);
 	get().apu.output(get().buf.center(), get().buf.left(), get().buf.right());
 
 	get().sound.start(44100, 2);
-}
 
-void Emu::Execute()
-{
 	get().InitSFML();
 	get().LoadGame();
 	SharpLr::Init();
