@@ -188,7 +188,6 @@ G:::::G        G::::G a::::aaaa::::::a m::::m   m::::m   m::::me::::::eeeeeeeeee
 
 	std::cout << "Programmed by Julien Magnin (MS-DOS1999)" << std::endl;
 	std::cout << "Sound Emulation programmed by blargg" << std::endl;
-	std::cout << "Chiptune used for intro and file selection composed by Kid Zan" << std::endl;
 	std::cout << "Original Gameboy pixel art by ENSELLITIS" << std::endl;
 }
 
