@@ -30,7 +30,7 @@ G:::::G        G::::G a::::aaaa::::::a m::::m   m::::m   m::::me::::::eeeeeeeeee
   Original Gameboy pixel art by ENSELLITIS
  ```
 
-GameBoo is a Windows Nintendo GameBoy Color emulator written in C++/C/SFML/SDL.
+GameBoo is a Windows Nintendo GameBoy emulator written in C++/C/SFML/SDL.
 The emulator can run the majority of GB games.
 
 <img src="Images/pokemonred.PNG" width="353"><img src="Images/zelda.PNG" width="353"><img src="Images/finalfantasy.PNG" width="353"><img src="Images/pokemonsilver.PNG" width="353">
